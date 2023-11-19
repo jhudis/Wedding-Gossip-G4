@@ -10,7 +10,7 @@ from PIL import Image,ImageTk
 
 import constants
 from players.default_player import Player as DefaultPlayer
-from players.default_player import Player as Player1
+from players.team_1 import Player as Player1
 from players.default_player import Player as Player2
 from players.default_player import Player as Player3
 from players.default_player import Player as Player4

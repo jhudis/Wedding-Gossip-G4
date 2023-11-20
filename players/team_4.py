@@ -29,31 +29,13 @@ class Player():
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
 
-        action_type = random.randint(0, 2)
+        action_type = random.randint(0, 1)
 
-        # talk
-        if action_type == 0:
-            direction = random.randint(0, 1)
-            gossip = random.choice(self.gossip_list)
-            # left
-            if direction == 0:
-                return 'talk', 'left', gossip
-            # right
-            else:
-                return 'talk', 'right', gossip
-        
-        # listen
-        elif action_type == 1:
-            direction = random.randint(0, 1)
-            # left
-            if direction == 0:
-                return 'listen', 'left'
-            # right
-            else:
-                return 'listen', 'right'
+        # print(self.id, end=" ")
 
         # move
-        else:
+        if action_type == 0:
+            # print('move')
             table1 = random.randint(0, 9)
             seat1 = random.randint(0, 9)
 
@@ -64,6 +46,29 @@ class Player():
             seat2 = random.randint(0, 9)
 
             return 'move', [[table1, seat1], [table2, seat2]]
+        
+        # talk
+        elif action_type == 1 and max(self.gossip_list) > 45:
+            # print('talk')
+            direction = random.randint(0, 1)
+            gossip = max(self.gossip_list)
+            # left
+            if direction == 0:
+                return 'talk', 'left', gossip
+            # right
+            else:
+                return 'talk', 'right', gossip
+        
+        # listen
+        else:
+            # print('listen')
+            direction = random.randint(0, 1)
+            # left
+            if direction == 0:
+                return 'listen', 'left'
+            # right
+            else:
+                return 'listen', 'right'
     
     def feedback(self, feedback):
         pass

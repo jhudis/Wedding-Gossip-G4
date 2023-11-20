@@ -444,7 +444,7 @@ class WeddingGossip():
     
     def get_player_recent_actions(self, player_id):
         player_actions = []
-        table_num = self.player_states[player_id]
+        table_num = self.player_states[player_id].table_num
         for player_state in self.player_states:
             if player_state.table_num == table_num:
                 if player_state.action[0] == 'talk':
@@ -452,6 +452,7 @@ class WeddingGossip():
                     player_actions.append(action)
                 elif player_state.action[0] == 'listen':
                     action = [player_state.id, [player_state.action[0], player_state.action[1]]]
+                    player_actions.append(action)
 
         return player_actions
 

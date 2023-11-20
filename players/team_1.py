@@ -12,6 +12,10 @@ class Player():
         self.group_score = 0
         self.individual_score = 0
 
+        # player to knowledge map
+        self.player_gossip_map = {}
+        self.turn_counter = 0
+
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     def observe_before_turn(self, player_positions):
@@ -23,19 +27,25 @@ class Player():
         pass
 
     def get_action(self):
+        self.turn_counter += 1
         # return 'talk', 'left', <gossip_number>
         # return 'talk', 'right', <gossip_number>
         # return 'listen', 'left', 
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
 
-        action_type = random.randint(0, 2)
+        # move with 15% probability (this was just an arbitrary choice)
+        # if gossip > 60, talk w/ 60% probability (this was just an arbitrary choice); else 25% (reverse for listen)
+        talk_probability = 60
+        if all(x < 60 for x in self.gossip_list):
+            talk_probability = 25
+        action_type = random.randint(0, 100)
 
         # talk
-        if action_type == 0:
-            direction = random.randint(0, 1)
+        if action_type < talk_probability:
+            direction = self.turn_counter % 2
             gossip = random.choice(self.gossip_list)
-            # left
+            # talk left on even turns
             if direction == 0:
                 return 'talk', 'left', gossip
             # right
@@ -43,10 +53,10 @@ class Player():
                 return 'talk', 'right', gossip
         
         # listen
-        elif action_type == 1:
-            direction = random.randint(0, 1)
-            # left
-            if direction == 0:
+        elif action_type < 85:
+            direction = self.turn_counter % 2
+            # listen left on odd turns
+            if direction == 1:
                 return 'listen', 'left'
             # right
             else:
@@ -68,5 +78,11 @@ class Player():
     def feedback(self, feedback):
         pass
 
+    # add learned gossip to our gossip list and to the gossip list of the player we received it from... to be used later
     def get_gossip(self, gossip_item, gossip_talker):
+        self.gossip_list.append(gossip_item)
+        if gossip_talker not in self.player_gossip_map:
+            self.player_gossip_map[gossip_talker] = [gossip_item]
+        else:
+            self.player_gossip_map[gossip_talker].append(gossip_item)
         pass

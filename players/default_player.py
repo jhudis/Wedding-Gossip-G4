@@ -63,7 +63,8 @@ class Player():
 
             seat2 = random.randint(0, 9)
 
-            return 'move', [[table1, seat1], [table2, seat2]]
+            return 'move', [[table1, seat1], [table2, seat2], [table2, seat2], [table2, seat2], [table2, seat2], [table2, seat2],\
+                            [table2, seat2], [table2, seat2], [table2, seat2], [table2, seat2], [table2, seat2], [table2, seat2]]
     
     def feedback(self, feedback):
         pass

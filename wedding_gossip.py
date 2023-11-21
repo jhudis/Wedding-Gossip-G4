@@ -11,11 +11,11 @@ from PIL import Image,ImageTk
 import constants
 from players.default_player import Player as DefaultPlayer
 from players.team_1 import Player as Player1
-from players.default_player import Player as Player2
-from players.default_player import Player as Player3
-from players.default_player import Player as Player4
-from players.default_player import Player as Player5
-from players.default_player import Player as Player6
+from players.team_2 import Player as Player2
+from players.team_3 import Player as Player3
+from players.team_4 import Player as Player4
+from players.team_5 import Player as Player5
+from players.team_6 import Player as Player6
 
 from player_state import PlayerState
 
@@ -404,31 +404,42 @@ class WeddingGossip():
         self.canvas.pack()
 
     def move_player(self, index, player, priority_list):
+        empty_seat_list = []
+        for table_num in range(10):
+            for seat_num in range(10):
+                seat = self.tables[table_num].seats[seat_num]
+                if seat == [-1, -1]:
+                    empty_seat_list.append([table_num, seat_num])
+
         curr_table_num = self.player_states[index].table_num
         curr_seat_num = self.player_states[index].seat_num
 
         id = self.player_states[index].id
         team_num = self.player_states[index].team_num
 
+        if len(priority_list) > 10:
+            return 0
+
         for moves in priority_list:
             table_num, seat_num = moves[0], moves[1]
 
-            # check if new position is occupied
-            if self.tables[table_num].seats[seat_num] == [-1, -1]:
-                # move player from old position to new position
-                self.tables[curr_table_num].seats[curr_seat_num] = [-1, -1]
-                self.tables[table_num].seats[seat_num] = [id, team_num]
+            if [table_num, seat_num] in empty_seat_list:
+                # check if new position is occupied
+                if self.tables[table_num].seats[seat_num] == [-1, -1]:
+                    # move player from old position to new position
+                    self.tables[curr_table_num].seats[curr_seat_num] = [-1, -1]
+                    self.tables[table_num].seats[seat_num] = [id, team_num]
 
-                # update player
-                player.table_num = table_num
-                player.seat_num = seat_num
+                    # update player
+                    player.table_num = table_num
+                    player.seat_num = seat_num
 
-                # update player state
-                self.player_states[index].table_num = table_num
-                self.player_states[index].seat_num = seat_num
+                    # update player state
+                    self.player_states[index].table_num = table_num
+                    self.player_states[index].seat_num = seat_num
 
-                self.attendee_logs[index] += " Moved to Table Num: " + str(table_num) + " Seat Num: " + str(seat_num)
-                return 1
+                    self.attendee_logs[index] += " Moved to Table Num: " + str(table_num) + " Seat Num: " + str(seat_num)
+                    return 1
         return 0
 
     # observe before turn
@@ -552,11 +563,11 @@ class WeddingGossip():
                             if lp_action[0] == 'talk':
                                 talking_direction = lp_action[1]
                                 gossip_item = int(lp_action[2])
-                                if gossip_item >= highest_gossip_val:
+                                if gossip_item > highest_gossip_val:
                                     highest_gossip_val = gossip_item
                                     highest_gossip_talker = left_player_ids[lp_index]
 
-                                if gossip_item not in self.player_states[index].gossip_list and gossip_item >= new_gossip_val:
+                                if gossip_item not in self.player_states[index].gossip_list and gossip_item > new_gossip_val:
                                     new_gossip_val = gossip_item
                                     new_gossip_talker = left_player_ids[lp_index]
 
@@ -618,11 +629,11 @@ class WeddingGossip():
                                 talking_direction = rp_action[1]
                                 gossip_item = int(rp_action[2])
                                 if talking_direction == 'left':
-                                    if gossip_item >= highest_gossip_val:
+                                    if gossip_item > highest_gossip_val:
                                         highest_gossip_val = gossip_item
                                         highest_gossip_talker = right_player_ids[rp_index]
 
-                                    if gossip_item not in self.player_states[index].gossip_list and gossip_item >= new_gossip_val:
+                                    if gossip_item not in self.player_states[index].gossip_list and gossip_item > new_gossip_val:
                                         new_gossip_val = gossip_item
                                         new_gossip_talker = right_player_ids[rp_index]
 

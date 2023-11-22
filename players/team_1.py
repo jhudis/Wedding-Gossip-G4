@@ -34,6 +34,10 @@ class Player():
         for position in player_positions:
             self.seating_arrangement[(position[1], position[2])] = position[0]
 
+        # update seat_num, table_num
+        self.table_num = player_positions[self.id][1]
+        self.seat_num = player_positions[self.id][2]
+
         # find empty seats
         for i in range(10):
             for j in range(10):
@@ -66,12 +70,31 @@ class Player():
             direction = self.turn_counter % 2
             gossip = random.choice(self.gossip_list)
             self.recent_gossip_shared = gossip
+            
             # talk left on even turns
+            # check to see if gossip is in target player's knowledge base
+            # if gossip is not known by at least 2 players, talk, else listen
             if direction == 0:
-                return 'talk', 'left', gossip
+                known_count = 0
+                for i in range(1, 4):
+                    target_player = self.seating_arrangement[(self.table_num, (self.seat_num - i) % 10)]
+                    if target_player != -1:
+                        if gossip in self.player_gossip_map[target_player]:
+                            known_count += 1
+                if known_count < 2:
+                    return 'talk', 'left', gossip
+                return 'listen', 'right'
             # right
             else:
-                return 'talk', 'right', gossip
+                known_count = 0
+                for i in range(1, 4):
+                    target_player = self.seating_arrangement[(self.table_num, (self.seat_num + i) % 10)]
+                    if target_player != -1:
+                        if gossip in self.player_gossip_map[target_player]:
+                            known_count += 1
+                if known_count < 2:
+                    return 'talk', 'right', gossip
+                return 'listen', 'left'
         
         # listen
         elif action_type < 85:
@@ -84,17 +107,41 @@ class Player():
                 return 'listen', 'right'
 
         # move
-        else:
-            table1 = random.randint(0, 9)
-            seat1 = random.randint(0, 9)
+        print("Moving")
 
-            table2 = random.randint(0, 9)
-            while table2 == table1:
-                table2 = random.randint(0, 9)
+        # find closest player with the best gossip in their knowledge base
+        # if no such player exists, move to a random open seat
+        
+        # sort open seats by how crowded they are 3 seats in each direction
+        seat_count = {}
+        for seat in self.open_seats:
+            seat_count[seat] = 0
+            for i in range(1, 4):
+                target_player = self.seating_arrangement[(seat[0], (seat[1] - i) % 10)]
+                if target_player != -1:
+                    seat_count[seat] += 1
+                target_player = self.seating_arrangement[(seat[0], (seat[1] + i) % 10)]
+                if target_player != -1:
+                    seat_count[seat] += 1
 
-            seat2 = random.randint(0, 9)
+        sorted_seats = sorted(seat_count.items(), key=lambda x: x[1], reverse=True)
 
-            return 'move', [[table1, seat1], [table2, seat2]]
+        waitlist = []
+        for seat in sorted_seats:
+            waitlist.append([seat[0][0], seat[0][1]])
+
+        return 'move', waitlist
+                
+        # table1 = random.randint(0, 9)
+        # seat1 = random.randint(0, 9)
+
+        # table2 = random.randint(0, 9)
+        # while table2 == table1:
+        #     table2 = random.randint(0, 9)
+
+        # seat2 = random.randint(0, 9)
+
+        # return 'move', [[table1, seat1], [table2, seat2]]
 
     # add shared feedback to those player's knowledge base that received it 'Nod Head 12'
     def feedback(self, feedback):
@@ -103,10 +150,10 @@ class Player():
             result = feed.split(' ')
             if result[0] == "Nod":
                 self.player_gossip_map[int(result[2])].append(self.recent_gossip_shared)
-        pass
+        
 
     # add learned gossip to our gossip list and to the gossip list of the player we received it from... to be used later
     def get_gossip(self, gossip_item, gossip_talker):
         self.gossip_list.append(gossip_item)
         self.player_gossip_map[gossip_talker].append(gossip_item)
-        pass
+        

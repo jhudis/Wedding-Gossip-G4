@@ -11,6 +11,7 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
+        self.turn_num = 0
 
 
     def observe_before_turn(self, player_positions):
@@ -33,8 +34,16 @@ class Player():
     
     def _get_direction(self, command):
         '''Returns 'left' or 'right' for the given command (which must be 'talk' or 'listen').'''
-        # TODO: Change default behavior seen below to specifications in Brainstorming doc (Justin)
-        return ['left', 'right'][random.randint(0, 1)]
+        if self.turn_num % 2 == 0:
+            if command == 'talk':
+                return 'left'
+            elif command == 'listen':
+                return 'right'
+        else:
+            if command == 'talk':
+                return 'right'
+            elif command == 'listen':
+                return 'left'
     
     def _get_gossip(self):
         '''Returns the gossip number we want to say.'''
@@ -60,6 +69,7 @@ class Player():
         - 'listen', 'right'
         - 'move', priority_list: [[table number, seat number] ...]
         '''
+        self.turn_num += 1
         command = self._get_command()
         if command == 'talk':
             return command, self._get_direction(command), self._get_gossip()

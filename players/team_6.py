@@ -12,6 +12,12 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
+        # store how many times we listen to each player
+        self.gossip_talkers = {}
+        # store how many times we hear each gossip
+        self.gossip_items = {}
+        # store how many times we get nods from each player
+        self.nods = {}
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 
@@ -65,7 +71,30 @@ class Player():
             return 'move', [[table1, seat1], [table2, seat2]]
 
     def feedback(self, feedback):
-        pass
+        # store which players nodded and how many times
+        if feedback != []:
+            player = int(feedback[0][9:])
+            if player in self.nods:
+                self.nods[player] += 1
+            else:
+                self.nods[player] = 1
+
 
     def get_gossip(self, gossip_item, gossip_talker):
-        pass
+        # store gossip item and talkers
+        self.__add_gossip_item(gossip_item)
+        self.__add_gossip_talker(gossip_talker)
+
+    def __add_gossip_item(self, gossip_item):
+        # count how many times we hear the same gossip
+        if gossip_item in self.gossip_items:
+            self.gossip_items[gossip_item] += 1
+        else:
+            self.gossip_items[gossip_item] = 1
+
+    def __add_gossip_talker(self, gossip_talker):
+        # count how many times we listen to same talker
+        if gossip_talker in self.gossip_talkers:
+            self.gossip_talkers[gossip_talker] += 1
+        else:
+            self.gossip_talkers[gossip_talker] = 1

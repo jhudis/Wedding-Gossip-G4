@@ -18,6 +18,8 @@ class Player():
         self.gossip_items = {}
         # store how many times we get nods from each player
         self.nods = {}
+        # store how many times player shakes head
+        self.shakes = {}
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 
@@ -71,13 +73,28 @@ class Player():
             return 'move', [[table1, seat1], [table2, seat2]]
 
     def feedback(self, feedback):
-        # store which players nodded and how many times
+        # store which players nods and shakes head and how many times
         if feedback != []:
-            player = int(feedback[0][9:])
-            if player in self.nods:
-                self.nods[player] += 1
+            # nods head
+            if feedback[0][0] == 'N':
+                self.__nod_head(feedback)
+            # shakes head
             else:
-                self.nods[player] = 1
+                self.__shake_head(feedback)
+
+    def __nod_head(self, feedback):
+        player = int(feedback[0][9:])
+        if player in self.nods:
+            self.nods[player] += 1
+        else:
+            self.nods[player] = 1
+
+    def __shake_head(self, feedback):
+        player = int(feedback[0][11:])
+        if player in self.shakes:
+            self.shakes[player] += 1
+        else:
+            self.shakes[player] = 1
 
 
     def get_gossip(self, gossip_item, gossip_talker):

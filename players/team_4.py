@@ -25,9 +25,13 @@ class Player():
     def _get_command(self):
         '''Returns 'talk', 'listen', or 'move'.'''
         # TODO: Change default behavior seen below to specifications in Brainstorming doc (Stephen)
-        if random.random() < 0.5:
+        if random.random() < 0.12:
             return 'move'
-        elif max(self.gossip_list) > 45:
+        
+        talk_or_listen_prob = random.random()
+        highest_gossip_prob = max(self.gossip_list) / 90 
+
+        if talk_or_listen_prob <= highest_gossip_prob:
             return 'talk'
         else:
             return 'listen'

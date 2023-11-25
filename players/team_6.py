@@ -20,6 +20,7 @@ class Player():
         self.nods = {}
         # store how many times player shakes head
         self.shakes = {}
+        self.current_gossip = 0
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 

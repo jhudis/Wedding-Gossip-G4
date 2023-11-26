@@ -24,6 +24,7 @@ class Player():
 
         self.consecutive_shakes = 0  # track consecutive shakes
         self.turn_number = 0  # track the turn number
+        self.shake_pct = 0  # tracks the pct of shakes in the last listen
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 
@@ -37,46 +38,42 @@ class Player():
     def observe_after_turn(self, player_actions):
         pass
 
+    def find_empty_seat(self):
+        pass
+
     def get_action(self):
         self.turn_number += 1
 
-        # Check if the player has any high-value gossip
-        # likelihood of choosing to talk is increased to 60% (compared to 20% for listening and 20% for moving)
-        has_high_value_gossip = any(gossip > 70 for gossip in self.gossip_list)
+        # If two consecutive shakes are received, move to a new seat
+        if self.shake_pct >= 88:  # TODO: will need to update with a
+            self.shake_pct = 0  # Reset the shake count
+            # Logic to move to a new seat
+            return 'move', self.find_empty_seat()
+
+        has_high_value_gossip = self.current_gossip > 70
 
         # If the player has high-value gossip, increase the chance of talking
         if has_high_value_gossip:
             action_type = random.choices(
-                population=[0, 1, 2],
-                weights=[0.6, 0.2, 0.2],
+                population=[0, 1],  # talk, listen
+                weights=[0.7, 0.3],
                 k=1
             )[0]
         else:
-            action_type = random.randint(0, 2)
+            # talk or listen will be random otherwise
+            action_type = random.randint(0, 1)
 
-        # talk
-        if action_type == 0:
-            direction = random.choice(['left', 'right'])
-            gossip = random.choice(self.gossip_list)
-            return 'talk', direction, gossip
-
-        # listen
-        elif action_type == 1:
-            direction = random.choice(['left', 'right'])
-            return 'listen', direction
-
-        # move
+        # On even turns, talk/listen to the left
+        if self.turn_number % 2 == 0:
+            if action_type == 0:
+                return 'talk', 'left', self.current_gossip
+            else:
+                return 'listen', 'left'
         else:
-            table1 = random.randint(0, 9)
-            seat1 = random.randint(0, 9)
-
-            table2 = random.randint(0, 9)
-            while table2 == table1:
-                table2 = random.randint(0, 9)
-
-            seat2 = random.randint(0, 9)
-
-            return 'move', [[table1, seat1], [table2, seat2]]
+            if action_type == 0:
+                return 'talk', 'right', self.current_gossip
+            else:
+                return 'listen', 'right'
 
     def feedback(self, feedback):
         # store which players nods and shakes head and how many times

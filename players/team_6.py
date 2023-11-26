@@ -25,12 +25,12 @@ class Player():
         self.consecutive_shakes = 0  # track consecutive shakes
         self.turn_number = 0  # track the turn number
         self.shake_pct = 0  # tracks the pct of shakes in the last listen
+        self.latest_playerpositions = []
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 
     def observe_before_turn(self, player_positions):
-        # TODO: does not seem to have any data?
-        pass
+        self.latest_playerpositions = player_positions
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
     # did (i.e., talked/listened in what direction, or moved)
@@ -39,16 +39,45 @@ class Player():
         pass
 
     def find_empty_seat(self):
-        pass
+        '''
+        currently picking a seat randomly
+        '''
+
+        occupied_seats = set()
+
+        # Collect the occupied seats
+        for player_position in self.latest_playerpositions:
+            table_num, seat_num = player_position[1], player_position[2]
+            occupied_seats.add((table_num, seat_num))
+
+        empty_seats = []
+
+        # iterate through tables and seats to find empty seats
+        for table_num in range(0, 10):
+            for seat_num in range(0, 10):
+                if (table_num, seat_num) not in occupied_seats:
+                    empty_seats.append([table_num, seat_num])
+
+        # so that it doesn't keep trying to go to the first few tables
+        random.shuffle(empty_seats)
+
+        return empty_seats
 
     def get_action(self):
         self.turn_number += 1
 
-        # If two consecutive shakes are received, move to a new seat
-        if self.shake_pct >= 88:  # TODO: will need to update with a
+        # TODO: change so that it moves when shake pct is high
+        move = random.randint(0, 2)
+        # if self.shake_pct >= .88:
+        if move == 1:
             self.shake_pct = 0  # Reset the shake count
             # Logic to move to a new seat
-            return 'move', self.find_empty_seat()
+            priList = self.find_empty_seat()
+
+            return 'move', priList
+
+        # TODO: remove when current_gossip is set
+        self.current_gossip = max(self.gossip_list)
 
         has_high_value_gossip = self.current_gossip > 70
 
@@ -68,12 +97,12 @@ class Player():
             if action_type == 0:
                 return 'talk', 'left', self.current_gossip
             else:
-                return 'listen', 'left'
+                return 'listen', 'right'
         else:
             if action_type == 0:
                 return 'talk', 'right', self.current_gossip
             else:
-                return 'listen', 'right'
+                return 'listen', 'left'
 
     def feedback(self, feedback):
         # store which players nods and shakes head and how many times

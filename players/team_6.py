@@ -22,11 +22,15 @@ class Player():
         self.shakes = {}
         self.current_gossip = 0
 
+        self.consecutive_shakes = 0  # track consecutive shakes
+        self.turn_number = 0  # track the turn number
+        self.shake_pct = 0  # tracks the pct of shakes in the last listen
+        self.latest_playerpositions = []
+
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 
     def observe_before_turn(self, player_positions):
-        # TODO: does not seem to have any data?
-        pass
+        self.latest_playerpositions = player_positions
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
     # did (i.e., talked/listened in what direction, or moved)
@@ -34,44 +38,71 @@ class Player():
     def observe_after_turn(self, player_actions):
         pass
 
+    def find_empty_seat(self):
+        '''
+        currently picking a seat randomly
+        '''
+
+        occupied_seats = set()
+
+        # Collect the occupied seats
+        for player_position in self.latest_playerpositions:
+            table_num, seat_num = player_position[1], player_position[2]
+            occupied_seats.add((table_num, seat_num))
+
+        empty_seats = []
+
+        # iterate through tables and seats to find empty seats
+        for table_num in range(0, 10):
+            for seat_num in range(0, 10):
+                if (table_num, seat_num) not in occupied_seats:
+                    empty_seats.append([table_num, seat_num])
+
+        # so that it doesn't keep trying to go to the first few tables
+        random.shuffle(empty_seats)
+
+        return empty_seats
+
     def get_action(self):
-        # Check if the player has any high-value gossip
-        # likelihood of choosing to talk is increased to 60% (compared to 20% for listening and 20% for moving)
-        has_high_value_gossip = any(gossip > 70 for gossip in self.gossip_list)
+        self.turn_number += 1
+
+        # TODO: change so that it moves when shake pct is high
+        move = random.randint(0, 2)
+        # if self.shake_pct >= .88:
+        if move == 1:
+            self.shake_pct = 0  # Reset the shake count
+            # Logic to move to a new seat
+            priList = self.find_empty_seat()
+
+            return 'move', priList
+
+        # TODO: remove when current_gossip is set
+        self.current_gossip = max(self.gossip_list)
+
+        has_high_value_gossip = self.current_gossip > 70
 
         # If the player has high-value gossip, increase the chance of talking
         if has_high_value_gossip:
             action_type = random.choices(
-                population=[0, 1, 2],
-                weights=[0.6, 0.2, 0.2],
+                population=[0, 1],  # talk, listen
+                weights=[0.7, 0.3],
                 k=1
             )[0]
         else:
-            action_type = random.randint(0, 2)
+            # talk or listen will be random otherwise
+            action_type = random.randint(0, 1)
 
-        # talk
-        if action_type == 0:
-            direction = random.choice(['left', 'right'])
-            gossip = random.choice(self.gossip_list)
-            return 'talk', direction, gossip
-
-        # listen
-        elif action_type == 1:
-            direction = random.choice(['left', 'right'])
-            return 'listen', direction
-
-        # move
+        # On even turns, talk/listen to the left
+        if self.turn_number % 2 == 0:
+            if action_type == 0:
+                return 'talk', 'left', self.current_gossip
+            else:
+                return 'listen', 'right'
         else:
-            table1 = random.randint(0, 9)
-            seat1 = random.randint(0, 9)
-
-            table2 = random.randint(0, 9)
-            while table2 == table1:
-                table2 = random.randint(0, 9)
-
-            seat2 = random.randint(0, 9)
-
-            return 'move', [[table1, seat1], [table2, seat2]]
+            if action_type == 0:
+                return 'talk', 'right', self.current_gossip
+            else:
+                return 'listen', 'left'
 
     def feedback(self, feedback):
         # store which players nods and shakes head and how many times
@@ -96,7 +127,6 @@ class Player():
             self.shakes[player] += 1
         else:
             self.shakes[player] = 1
-
 
     def get_gossip(self, gossip_item, gossip_talker):
         # store gossip item and talkers

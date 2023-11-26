@@ -11,6 +11,7 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
+        self.turns = 0
 
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
@@ -28,45 +29,46 @@ class Player():
         # return 'listen', 'left', 
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
-
-        action_type = random.randint(0, 2)
+        self.turns+=1
+        action_type = self.turns%2
 
         # talk
-        if action_type == 0:
+        if self.unique_gossip>50:
             direction = random.randint(0, 1)
             gossip = random.choice(self.gossip_list)
             # left
-            if direction == 0:
+            if action_type == 0:
                 return 'talk', 'left', gossip
             # right
             else:
                 return 'talk', 'right', gossip
         
         # listen
-        elif action_type == 1:
+        else:
             direction = random.randint(0, 1)
             # left
-            if direction == 0:
+            if action_type == 0:
                 return 'listen', 'left'
             # right
             else:
                 return 'listen', 'right'
 
         # move
-        else:
-            table1 = random.randint(0, 9)
-            seat1 = random.randint(0, 9)
+        # else:
+        #     table1 = random.randint(0, 9)
+        #     seat1 = random.randint(0, 9)
 
-            table2 = random.randint(0, 9)
-            while table2 == table1:
-                table2 = random.randint(0, 9)
+        #     table2 = random.randint(0, 9)
+        #     while table2 == table1:
+        #         table2 = random.randint(0, 9)
 
-            seat2 = random.randint(0, 9)
+        #     seat2 = random.randint(0, 9)
 
-            return 'move', [[table1, seat1], [table2, seat2]]
+        #     return 'move', [[table1, seat1], [table2, seat2]]
     
     def feedback(self, feedback):
         pass
 
     def get_gossip(self, gossip_item, gossip_talker):
         pass
+    

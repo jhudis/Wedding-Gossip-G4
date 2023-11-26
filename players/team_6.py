@@ -1,5 +1,6 @@
 import random
 
+
 class Player():
     def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color):
         self.id = id
@@ -12,45 +13,43 @@ class Player():
         self.group_score = 0
         self.individual_score = 0
 
-
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
+
     def observe_before_turn(self, player_positions):
+        # TODO: does not seem to have any data?
         pass
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
     # did (i.e., talked/listened in what direction, or moved)
+
     def observe_after_turn(self, player_actions):
         pass
 
     def get_action(self):
-        # return 'talk', 'left', <gossip_number>
-        # return 'talk', 'right', <gossip_number>
-        # return 'listen', 'left', 
-        # return 'listen', 'right', 
-        # return 'move', priority_list: [[table number, seat number] ...]
+        # Check if the player has any high-value gossip
+        # likelihood of choosing to talk is increased to 60% (compared to 20% for listening and 20% for moving)
+        has_high_value_gossip = any(gossip > 70 for gossip in self.gossip_list)
 
-        action_type = random.randint(0, 2)
+        # If the player has high-value gossip, increase the chance of talking
+        if has_high_value_gossip:
+            action_type = random.choices(
+                population=[0, 1, 2],
+                weights=[0.6, 0.2, 0.2],
+                k=1
+            )[0]
+        else:
+            action_type = random.randint(0, 2)
 
         # talk
         if action_type == 0:
-            direction = random.randint(0, 1)
+            direction = random.choice(['left', 'right'])
             gossip = random.choice(self.gossip_list)
-            # left
-            if direction == 0:
-                return 'talk', 'left', gossip
-            # right
-            else:
-                return 'talk', 'right', gossip
-        
+            return 'talk', direction, gossip
+
         # listen
         elif action_type == 1:
-            direction = random.randint(0, 1)
-            # left
-            if direction == 0:
-                return 'listen', 'left'
-            # right
-            else:
-                return 'listen', 'right'
+            direction = random.choice(['left', 'right'])
+            return 'listen', direction
 
         # move
         else:
@@ -64,7 +63,7 @@ class Player():
             seat2 = random.randint(0, 9)
 
             return 'move', [[table1, seat1], [table2, seat2]]
-    
+
     def feedback(self, feedback):
         pass
 

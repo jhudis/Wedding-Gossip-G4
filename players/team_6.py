@@ -22,6 +22,9 @@ class Player():
         self.shakes = {}
         self.current_gossip = 0
 
+        self.consecutive_shakes = 0  # track consecutive shakes
+        self.turn_number = 0  # track the turn number
+
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
 
     def observe_before_turn(self, player_positions):
@@ -35,6 +38,8 @@ class Player():
         pass
 
     def get_action(self):
+        self.turn_number += 1
+
         # Check if the player has any high-value gossip
         # likelihood of choosing to talk is increased to 60% (compared to 20% for listening and 20% for moving)
         has_high_value_gossip = any(gossip > 70 for gossip in self.gossip_list)
@@ -96,7 +101,6 @@ class Player():
             self.shakes[player] += 1
         else:
             self.shakes[player] = 1
-
 
     def get_gossip(self, gossip_item, gossip_talker):
         # store gossip item and talkers

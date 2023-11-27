@@ -26,6 +26,9 @@ class Player():
         self.seating_arrangement = {}
         self.recent_gossip_shared = 0
 
+        # record the actions each player is taking at your table
+        self.action_counts = {}
+
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     # list of thruples: player number, table num, seat num
@@ -48,6 +51,23 @@ class Player():
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
     # did (i.e., talked/listened in what direction, or moved)
     def observe_after_turn(self, player_actions):
+
+        for player_action in player_actions:
+            player, action = player_action
+
+            act, direction = action
+
+            # dict of dicts
+            if player not in self.action_counts:
+
+                count_dict = {'talk': 0, 'listen': 0}
+                count_dict[act] += 1
+
+                self.action_counts[player] = count_dict
+
+            else:
+                self.action_counts[player][act] += 1
+        # print("ACTION COUNTS", self.action_counts)
         pass
 
     def get_action(self):

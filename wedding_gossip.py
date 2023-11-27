@@ -288,7 +288,7 @@ class WeddingGossip():
                 img= (Image.open("./icons/" + str(table) + ".png"))
 
                 # Resize the Image using resize method
-                resized_image= img.resize((14 * self.scale,14 * self.scale), Image.ANTIALIAS)
+                resized_image= img.resize((14 * self.scale,14 * self.scale), Image.LANCZOS)
                 self.icons.append(ImageTk.PhotoImage(resized_image))
 
                 self.canvas.create_image(interval * i + 8 * self.scale, interval * j + 16 * self.scale,anchor=NW,image=self.icons[table])

@@ -485,7 +485,7 @@ class WeddingGossip():
                     scores[team_num] = [player_state.individual_score]
 
             with open(self.result, 'a') as f:
-                f.write("\n\n\nTeam Scores\n")
+                f.write("\n\n\nAverage Team Scores\n")
 
             for team in sorted(scores.keys()):
                 print(team)
@@ -500,7 +500,7 @@ class WeddingGossip():
             sorted_avg_scores = sorted(avg_scores.items(), key=lambda x:x[1])[::-1]
             for team, score in sorted_avg_scores:
                 with open(self.result, 'a') as f:
-                    f.write("Team " + str(team) + " Score: " + str(score) + "\n")
+                    f.write("Team " + str(team) + ": " + str(score) + "\n")
 
             with open(self.result, 'a') as f:
                 f.write("\n\n\nAttendee Scores\n")

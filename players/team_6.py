@@ -1,6 +1,5 @@
 import random
 
-
 class Player():
     def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color):
         self.id = id
@@ -9,18 +8,10 @@ class Player():
         self.seat_num = seat_num
         self.color = color
         self.unique_gossip = unique_gossip
-        self.gossip_list = [unique_gossip]
+        self.gossip_list = [Gossip(unique_gossip)]
+        self.current_gossip = Gossip(unique_gossip)
         self.group_score = 0
         self.individual_score = 0
-        # store how many times we listen to each player
-        self.gossip_talkers = {}
-        # store how many times we hear each gossip
-        self.gossip_items = {}
-        # store how many times we get nods from each player
-        self.nods = {}
-        # store how many times player shakes head
-        self.shakes = {}
-        self.current_gossip = 0
 
         self.consecutive_shakes = 0  # track consecutive shakes
         self.turn_number = 0  # track the turn number
@@ -77,9 +68,10 @@ class Player():
             return 'move', priList
 
         # TODO: remove when current_gossip is set
-        self.current_gossip = max(self.gossip_list)
 
-        has_high_value_gossip = self.current_gossip > 70
+        self.current_gossip = self.get_max_gossip()
+
+        has_high_value_gossip = self.current_gossip.get_item() > 70
 
         # If the player has high-value gossip, increase the chance of talking
         if has_high_value_gossip:
@@ -95,54 +87,70 @@ class Player():
         # On even turns, talk/listen to the left
         if self.turn_number % 2 == 0:
             if action_type == 0:
-                return 'talk', 'left', self.current_gossip
+                return 'talk', 'left', self.current_gossip.get_item()
             else:
                 return 'listen', 'right'
         else:
             if action_type == 0:
-                return 'talk', 'right', self.current_gossip
+                return 'talk', 'right', self.current_gossip.get_item()
             else:
                 return 'listen', 'left'
+            
+    def get_max_gossip(self):
+        max_gossip = self.current_gossip
+        for gossip in self.gossip_list:
+            if gossip.get_item() > max_gossip.get_item():
+                max_gossip = gossip
+        return gossip
 
     def feedback(self, feedback):
-        # store which players nods and shakes head and how many times
-        if feedback != []:
-            # nods head
-            if feedback[0][0] == 'N':
-                self.__nod_head(feedback)
-            # shakes head
+        # log each feedback for current gossip 
+        for response in feedback:
+            # nod
+            if response[0] == 'N':
+                self.current_gossip.add_nod(int(response[9:]), self.turn_number)
+            # shake
             else:
-                self.__shake_head(feedback)
-
-    def __nod_head(self, feedback):
-        player = int(feedback[0][9:])
-        if player in self.nods:
-            self.nods[player] += 1
-        else:
-            self.nods[player] = 1
-
-    def __shake_head(self, feedback):
-        player = int(feedback[0][11:])
-        if player in self.shakes:
-            self.shakes[player] += 1
-        else:
-            self.shakes[player] = 1
+                self.current_gossip.add_shake(int(response[11:]), self.turn_number)
 
     def get_gossip(self, gossip_item, gossip_talker):
-        # store gossip item and talkers
-        self.__add_gossip_item(gossip_item)
-        self.__add_gossip_talker(gossip_talker)
-
-    def __add_gossip_item(self, gossip_item):
-        # count how many times we hear the same gossip
-        if gossip_item in self.gossip_items:
-            self.gossip_items[gossip_item] += 1
+        gossip = self.__get_gossip(gossip_item)
+        # log new gossip!
+        if gossip == None:
+            gossip = Gossip(gossip_item)
+            gossip.add_heard(gossip_talker, self.turn_number)
+            self.gossip_list.append(gossip)
+        # alter existing gossip
         else:
-            self.gossip_items[gossip_item] = 1
+            gossip.add_heard(gossip_talker, self.turn_number)
 
-    def __add_gossip_talker(self, gossip_talker):
-        # count how many times we listen to same talker
-        if gossip_talker in self.gossip_talkers:
-            self.gossip_talkers[gossip_talker] += 1
-        else:
-            self.gossip_talkers[gossip_talker] = 1
+    def __get_gossip(self, gossip_item):
+        for gossip in self.gossip_list:
+            if gossip.get_item() == gossip_item:
+                return gossip
+
+# everytime we hear gossip we store talker, item and turn we received it
+# can also use this to keep track of feedback we receive for particular gossip
+class Gossip():
+    def __init__(self, gossip_item: int):
+        self.gossip_item = gossip_item
+        # which players nod their head and on what turn
+        self.nods = []
+        # which players shake their head and on what turn
+        self.shakes = []
+        # which players told us this gossip on what turn
+        self.heard = []
+
+    def get_item(self):
+        return self.gossip_item
+
+    def add_nod(self, player: int, turn: int):
+        self.nods.append([player, turn])
+    
+    def add_shake(self, player: int, turn: int):
+        self.shakes.append([player, turn])
+
+    def add_heard(self, player: int, turn: int):
+        self.heard.append([player, turn])
+        
+    

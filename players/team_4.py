@@ -12,15 +12,17 @@ class Player():
         self.group_score = 0
         self.individual_score = 0
         self.turn_num = 0
+        self.player_positions = []
+        self.player_actions = []
 
 
     def observe_before_turn(self, player_positions):
         '''At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move'''
-        pass
+        self.player_positions = player_positions # list of lists, each of which is [player_id, table_num, seat_num]
 
     def observe_after_turn(self, player_actions):
         '''At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn) did (i.e., talked/listened in what direction, or moved)'''
-        pass
+        self.player_actions = player_actions # list of lists, each of which is [player_id, action_type, direction] (CCW = right, CW = left)
 
     def _get_command(self):
         '''Returns 'talk', 'listen', or 'move'.'''
@@ -55,14 +57,16 @@ class Player():
     
     def _get_seats(self):
         '''Returns an ordered list of empty seats to move to in the form [[table1, seat1], [table2, seat2], ...].'''
-        # TODO: Change default behavior seen below to specifications in Brainstorming doc (Christopher)
-        table1 = random.randint(0, 9)
-        table2 = random.randint(0, 9)
-        while table2 == table1:
-            table2 = random.randint(0, 9)
-        seat1 = random.randint(0, 9)
-        seat2 = random.randint(0, 9)
-        return [[table1, seat1], [table2, seat2]]
+        # TODO: Change default behavior seen below to specifications in Brainstorming doc (Cristopher)
+        OccupiedSeats = [[item[1], item[2]] for item in self.player_positions]
+        EmptySeats = []
+        for table_num in range(10):
+            for seat_num in range(10):
+                seat = [table_num, seat_num]
+                if seat not in OccupiedSeats:
+                    EmptySeats.append([table_num, seat_num])
+        return EmptySeats
+
 
     def get_action(self):
         '''

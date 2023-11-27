@@ -69,7 +69,7 @@ class Player():
 
         # TODO: remove when current_gossip is set
 
-        self.current_gossip = self.get_max_gossip()
+        self.current_gossip = self.get_new_gossip()
 
         has_high_value_gossip = self.current_gossip.get_item() > 70
 
@@ -120,6 +120,7 @@ class Player():
             gossip = Gossip(gossip_item)
             gossip.add_heard(gossip_talker, self.turn_number)
             self.gossip_list.append(gossip)
+            self.gossip_list.sort(key=lambda x: x.get_item(), reverse=True)
         # alter existing gossip
         else:
             gossip.add_heard(gossip_talker, self.turn_number)
@@ -128,6 +129,12 @@ class Player():
         for gossip in self.gossip_list:
             if gossip.get_item() == gossip_item:
                 return gossip
+
+    def get_new_gossip(self):
+        for gossip in self.gossip_list:
+            if len(gossip.shakes) < 45:
+                return gossip
+        return gossip[0]
 
 # everytime we hear gossip we store talker, item and turn we received it
 # can also use this to keep track of feedback we receive for particular gossip

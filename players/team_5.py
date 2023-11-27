@@ -10,7 +10,7 @@ from pettingzoo.utils import agent_selector, wrappers
 
 
 class Player():
-    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color):
+    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
         self.id = id
         self.team_num = team_num
         self.table_num = table_num

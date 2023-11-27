@@ -469,12 +469,41 @@ class WeddingGossip():
 
     def _play_game(self):
         self.attendee_logs = []
+        scores = {}
+        avg_scores = {}
         if self.turn > self.T:
             self.game_state = "over"
             with open(self.result, 'a') as f:
                 f.write("Results\n")
                 f.write("Group Score: " + str(round(self.group_score / 90, 2)) + "\n")
 
+            for index, player_state in enumerate(self.player_states):
+                team_num = player_state.team_num
+                if team_num in scores.keys():
+                    scores[team_num].append(player_state.individual_score)
+                else:
+                    scores[team_num] = [player_state.individual_score]
+
+            with open(self.result, 'a') as f:
+                f.write("\n\n\nAverage Team Scores\n")
+
+            for team in sorted(scores.keys()):
+                print(team)
+                total = 0
+                total_score = 0
+                for score in scores[team]:
+                    total_score += score
+                    total += 1
+
+                avg_scores[team] = round(total_score / total, 2)
+
+            sorted_avg_scores = sorted(avg_scores.items(), key=lambda x:x[1])[::-1]
+            for team, score in sorted_avg_scores:
+                with open(self.result, 'a') as f:
+                    f.write("Team " + str(team) + ": " + str(score) + "\n")
+
+            with open(self.result, 'a') as f:
+                f.write("\n\n\nAttendee Scores\n")
             for index, player_state in enumerate(self.player_states):
                 with open(self.result, 'a') as f:
                     f.write("Attendee: " + str(player_state.id) + " Team: " + str(player_state.team_num) + " Individual Score: " + str(player_state.individual_score) + " Initial Gossip: " + str(player_state.initial_gossip) + "\n")

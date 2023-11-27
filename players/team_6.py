@@ -1,7 +1,8 @@
 import random
 
+
 class Player():
-    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color):
+    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
         self.id = id
         self.team_num = team_num
         self.table_num = table_num
@@ -95,7 +96,7 @@ class Player():
                 return 'talk', 'right', self.current_gossip.get_item()
             else:
                 return 'listen', 'left'
-            
+
     def get_max_gossip(self):
         max_gossip = self.current_gossip
         for gossip in self.gossip_list:
@@ -104,14 +105,16 @@ class Player():
         return gossip
 
     def feedback(self, feedback):
-        # log each feedback for current gossip 
+        # log each feedback for current gossip
         for response in feedback:
             # nod
             if response[0] == 'N':
-                self.current_gossip.add_nod(int(response[9:]), self.turn_number)
+                self.current_gossip.add_nod(
+                    int(response[9:]), self.turn_number)
             # shake
             else:
-                self.current_gossip.add_shake(int(response[11:]), self.turn_number)
+                self.current_gossip.add_shake(
+                    int(response[11:]), self.turn_number)
 
     def get_gossip(self, gossip_item, gossip_talker):
         gossip = self.__get_gossip(gossip_item)
@@ -138,6 +141,8 @@ class Player():
 
 # everytime we hear gossip we store talker, item and turn we received it
 # can also use this to keep track of feedback we receive for particular gossip
+
+
 class Gossip():
     def __init__(self, gossip_item: int):
         self.gossip_item = gossip_item
@@ -153,11 +158,9 @@ class Gossip():
 
     def add_nod(self, player: int, turn: int):
         self.nods.append([player, turn])
-    
+
     def add_shake(self, player: int, turn: int):
         self.shakes.append([player, turn])
 
     def add_heard(self, player: int, turn: int):
         self.heard.append([player, turn])
-        
-    

@@ -4,7 +4,7 @@ import math
 
 
 class Player():
-    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color):
+    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
         self.round_number = 1
         self.move_counter = random.randint(0, 9)
         self.id = id

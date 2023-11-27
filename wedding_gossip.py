@@ -162,25 +162,25 @@ class WeddingGossip():
             self.tables[table_num].seats[seat_num] = [id, team_num]
 
             if team_num == 1:
-                self.shuffled_players.append(Player1(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player1(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 2:
-                self.shuffled_players.append(Player2(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player2(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 3:
-                self.shuffled_players.append(Player3(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player3(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 4:
-                self.shuffled_players.append(Player4(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player4(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 5:
-                self.shuffled_players.append(Player5(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player5(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 6:
-                self.shuffled_players.append(Player6(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player6(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             else:
-                self.shuffled_players.append(DefaultPlayer(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(DefaultPlayer(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
 
         self.players = sorted(self.shuffled_players, key=lambda x: x.id)

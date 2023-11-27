@@ -132,7 +132,7 @@ class Player():
 
     def get_new_gossip(self):
         for gossip in self.gossip_list:
-            if len(gossip.shakes) < 45:
+            if len(gossip.shakes) < 30:
                 return gossip
         return gossip[0]
 

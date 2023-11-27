@@ -133,17 +133,17 @@ class Player():
             #print('talking with a value of ' + str(val))
             #print("talker gossip len" + str(len(self.gossip_list)))
             if self.round_number%2 == 0: #is even, so do this 
-                return 'talk','right',val
+                return 'talk','left',val
 
             else: 
-                return 'talk','left',val
+                return 'talk','right',val
         if action == 'listen':
             #print('listening')
             #print("this is the length of this players gossip" + str(len(self.gossip_list)))
             if self.round_number%2 == 0:
-                return 'listen', 'left'
-            else: 
                 return 'listen', 'right'
+            else: 
+                return 'listen', 'left'
             
         else: #move 
             table1 = random.randint(0, 9)

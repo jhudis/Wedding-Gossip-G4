@@ -10,12 +10,9 @@ class Player():
         self.color = color
         self.unique_gossip = unique_gossip
         self.gossip_list = [unique_gossip]
+        self.gossip = [Gossip]
         self.group_score = 0
         self.individual_score = 0
-        # store how many times we listen to each player
-        self.gossip_talkers = {}
-        # store how many times we hear each gossip
-        self.gossip_items = {}
         # store how many times we get nods from each player
         self.nods = {}
         # store how many times player shakes head
@@ -129,20 +126,12 @@ class Player():
             self.shakes[player] = 1
 
     def get_gossip(self, gossip_item, gossip_talker):
-        # store gossip item and talkers
-        self.__add_gossip_item(gossip_item)
-        self.__add_gossip_talker(gossip_talker)
+        # create gossip instance
+        self.gossip.append(Gossip(gossip_talker, gossip_item, self.turn_number))
 
-    def __add_gossip_item(self, gossip_item):
-        # count how many times we hear the same gossip
-        if gossip_item in self.gossip_items:
-            self.gossip_items[gossip_item] += 1
-        else:
-            self.gossip_items[gossip_item] = 1
-
-    def __add_gossip_talker(self, gossip_talker):
-        # count how many times we listen to same talker
-        if gossip_talker in self.gossip_talkers:
-            self.gossip_talkers[gossip_talker] += 1
-        else:
-            self.gossip_talkers[gossip_talker] = 1
+# everytime we hear gossip we store talker, item and turn we received it
+class Gossip():
+    def __init__(self, gossip_talker, gossip_item, turn):
+        self.gossip_talker = gossip_talker
+        self.gossip_item = gossip_item
+        self.turn = turn

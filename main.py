@@ -8,6 +8,6 @@ if __name__ == '__main__':
     parser.add_argument("--scale", "-sc", default=10, help="Scale")
     parser.add_argument("--turns", "-T", default=60, help="Number of turns")
     parser.add_argument("--gui", "-g", default="True", help="GUI")
-    parser.add_argument("--interval", "-i", default=100, help="GUI")
+    parser.add_argument("--interval", "-i", default=1, help="GUI")
     args = parser.parse_args()
     dodgem_game = WeddingGossip(args)

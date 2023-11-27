@@ -46,17 +46,17 @@ class Player():
 
         #this function is currently null 
 
-        try:
-            action = player_actions[0]
-            print("printing player action")
-            print(action)
-        except:
-            print("there are no player actions ")
+        #try:
+        action = player_actions[0]
+            #print("printing player action")
+            #print(action)
+        #except:
+            #print("there are no player actions ")
         #if action != "":
             
         
         
-        my_action = "talk"
+        '''my_action = "talk"
         #get whatever our current action is 
         for action in player_actions:
             player_id = action[0]
@@ -87,7 +87,7 @@ class Player():
                 
                 #need to figure out new gossip that we heard and from who? .
                 new_gossip = set(self.gossip_list-self.prev_gossip)
-                self.prev_gossip = self.gossip_list
+                self.prev_gossip = self.gossip_list'''
 
 
 
@@ -196,7 +196,8 @@ class Player():
         pass
 
     def get_gossip(self, gossip_item, gossip_talker):
-        pass
+        #if you recieve an item of gossip, you can add to your list 
+        self.gossip_list.append(gossip_item)
 
     def get_heuristic(self):
         #aquire top gosip 

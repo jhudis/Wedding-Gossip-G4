@@ -106,23 +106,23 @@ class Player():
 
     def feedback(self, feedback):
         # store which players nods and shakes head and how many times
-        if feedback != []:
+        for response in feedback:
             # nods head
-            if feedback[0][0] == 'N':
-                self.__nod_head(feedback)
+            if response[0] == 'N':
+                self.__nod_head(response)
             # shakes head
             else:
-                self.__shake_head(feedback)
+                self.__shake_head(response)
 
-    def __nod_head(self, feedback):
-        player = int(feedback[0][9:])
+    def __nod_head(self, response):
+        player = int(response[9:])
         if player in self.nods:
             self.nods[player] += 1
         else:
             self.nods[player] = 1
 
-    def __shake_head(self, feedback):
-        player = int(feedback[0][11:])
+    def __shake_head(self, response):
+        player = int(response[11:])
         if player in self.shakes:
             self.shakes[player] += 1
         else:

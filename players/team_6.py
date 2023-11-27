@@ -104,8 +104,14 @@ class Player():
         return gossip
 
     def feedback(self, feedback):
-        # get current gossip item
-        currentGossip = None
+        # log each feedback for current gossip 
+        for response in feedback:
+            # nod
+            if response[0] == 'N':
+                self.current_gossip.add_nod(int(response[9:]), self.turn_number)
+            # shake
+            else:
+                self.current_gossip.add_shake(int(response[11:]), self.turn_number)
 
     def get_gossip(self, gossip_item, gossip_talker):
         gossip = self.__get_gossip(gossip_item)
@@ -126,7 +132,7 @@ class Player():
 # everytime we hear gossip we store talker, item and turn we received it
 # can also use this to keep track of feedback we receive for particular gossip
 class Gossip():
-    def __init__(self, gossip_item):
+    def __init__(self, gossip_item: int):
         self.gossip_item = gossip_item
         # which players nod their head and on what turn
         self.nods = []
@@ -138,13 +144,13 @@ class Gossip():
     def get_item(self):
         return self.gossip_item
 
-    def add_nod(self, player, turn):
+    def add_nod(self, player: int, turn: int):
         self.nods.append([player, turn])
     
-    def add_shake(self, player, turn):
+    def add_shake(self, player: int, turn: int):
         self.shakes.append([player, turn])
 
-    def add_heard(self, player, turn):
+    def add_heard(self, player: int, turn: int):
         self.heard.append([player, turn])
         
     

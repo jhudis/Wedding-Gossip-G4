@@ -30,7 +30,23 @@ class Player():
     def observe_after_turn(self, player_actions):
         pass
 
-    def find_empty_seat(self):
+    def get_action(self):
+        self.turn_number += 1
+
+        # TODO: change so that it moves when shake pct is high
+        # if self.shake_pct >= .88:
+        if random.randint(0,2) == 1:
+            self.shake_pct = 0  # Reset the shake count
+            # Logic to move to a new seat
+            priList = self.__find_empty_seat()
+            return 'move', priList
+
+        if random.randint(0,1) == 0:
+            self.current_gossip = self.get_new_gossip()
+            return self.__talk()
+        return self.__listen()
+    
+    def __find_empty_seat(self):
         '''
         currently picking a seat randomly
         '''
@@ -54,48 +70,18 @@ class Player():
         random.shuffle(empty_seats)
 
         return empty_seats
-
-    def get_action(self):
-        self.turn_number += 1
-
-        # TODO: change so that it moves when shake pct is high
-        move = random.randint(0, 2)
-        # if self.shake_pct >= .88:
-        if move == 1:
-            self.shake_pct = 0  # Reset the shake count
-            # Logic to move to a new seat
-            priList = self.find_empty_seat()
-
-            return 'move', priList
-
-        # TODO: remove when current_gossip is set
-
-        self.current_gossip = self.get_new_gossip()
-
-        has_high_value_gossip = self.current_gossip.get_item() > 70
-
-        # If the player has high-value gossip, increase the chance of talking
-        if has_high_value_gossip:
-            action_type = random.choices(
-                population=[0, 1],  # talk, listen
-                weights=[0.7, 0.3],
-                k=1
-            )[0]
-        else:
-            # talk or listen will be random otherwise
-            action_type = random.randint(0, 1)
-
-        # On even turns, talk/listen to the left
+            
+    def __listen(self):
+        # on even turns listen right
         if self.turn_number % 2 == 0:
-            if action_type == 0:
-                return 'talk', 'left', self.current_gossip.get_item()
-            else:
-                return 'listen', 'right'
-        else:
-            if action_type == 0:
-                return 'talk', 'right', self.current_gossip.get_item()
-            else:
-                return 'listen', 'left'
+            return 'listen', 'right'
+        return 'listen', 'left'
+            
+    def __talk(self):
+        # on even turns talk left
+        if self.turn_number % 2 == 0:
+            return 'talk', 'left', self.current_gossip.get_item()
+        return 'talk', 'right', self.current_gossip.get_item()
 
     def get_max_gossip(self):
         max_gossip = self.current_gossip
@@ -106,15 +92,23 @@ class Player():
 
     def feedback(self, feedback):
         # log each feedback for current gossip
+        nods = 0
+        shakes = 0
         for response in feedback:
             # nod
             if response[0] == 'N':
-                self.current_gossip.add_nod(
-                    int(response[9:]), self.turn_number)
+                nods += 1
+                self.current_gossip.add_nod(int(response[9:]), self.turn_number)
             # shake
             else:
-                self.current_gossip.add_shake(
-                    int(response[11:]), self.turn_number)
+                shakes += 1
+                self.current_gossip.add_shake(int(response[11:]), self.turn_number)
+        if nods == 0 and shakes == 0:
+            self.shake_pct = 0
+        else:
+            self.shake_pct = shakes/(nods + shakes)
+        if self.shake_pct == 1 and len(self.gossip_list) > 1:
+            self.gossip_list.pop(0)
 
     def get_gossip(self, gossip_item, gossip_talker):
         gossip = self.__get_gossip(gossip_item)

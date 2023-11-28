@@ -1,7 +1,7 @@
 import random
 
 class Player():
-    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color):
+    def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
         self.id = id
         self.team_num = team_num
         self.table_num = table_num
@@ -11,13 +11,15 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
+        self.turns_num = turns
 
+        self.curr_turn = 0
         self.hottest_goss = unique_gossip
         self.empty_seats = []
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     def observe_before_turn(self, player_positions):
-        self.empty_seats = self._get_empty_seats(player_positions)
+        self._get_empty_seats(player_positions)
 
     def _get_empty_seats(self, player_positions):
         self.empty_seats.clear()
@@ -40,13 +42,15 @@ class Player():
         # return 'move', priority_list: [[table number, seat number] ...]
 
         choice = random.random()
-        direction = 'left' if random.randint(0, 1) else 'right'
+        self.curr_turn += 1
 
         # talk
         if choice < self.hottest_goss / 90 * .9:
+            direction = 'right' if self.curr_turn % 2 else 'left'
             return 'talk', direction, self.hottest_goss
         # listen
         elif choice < .9:
+            direction = 'left' if self.curr_turn % 2 else 'right'
             return 'listen', direction
         # move
         else:

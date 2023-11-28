@@ -42,7 +42,7 @@ class Player():
             return 'move', priList
 
         if random.randint(0,1) == 0:
-            self.current_gossip = self.get_new_gossip()
+            self.current_gossip = self.__get_new_gossip()
             return self.__talk()
         return self.__listen()
     
@@ -82,13 +82,12 @@ class Player():
         if self.turn_number % 2 == 0:
             return 'talk', 'left', self.current_gossip.get_item()
         return 'talk', 'right', self.current_gossip.get_item()
-
-    def get_max_gossip(self):
-        max_gossip = self.current_gossip
+    
+    def __get_new_gossip(self):
         for gossip in self.gossip_list:
-            if gossip.get_item() > max_gossip.get_item():
-                max_gossip = gossip
-        return gossip
+            if len(gossip.shakes) < 30:
+                return gossip
+        return gossip[0]
 
     def feedback(self, feedback):
         # log each feedback for current gossip
@@ -126,12 +125,6 @@ class Player():
         for gossip in self.gossip_list:
             if gossip.get_item() == gossip_item:
                 return gossip
-
-    def get_new_gossip(self):
-        for gossip in self.gossip_list:
-            if len(gossip.shakes) < 30:
-                return gossip
-        return gossip[0]
 
 # everytime we hear gossip we store talker, item and turn we received it
 # can also use this to keep track of feedback we receive for particular gossip

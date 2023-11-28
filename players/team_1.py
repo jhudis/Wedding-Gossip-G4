@@ -127,7 +127,8 @@ class Player():
 
         waitlist = []
         for seat in sorted_seats:
-            waitlist.append([seat[0][0], seat[0][1]])
+            if seat[0][0] != self.table_num: # move to a different table
+                waitlist.append([seat[0][0], seat[0][1]])
 
         return 'move', waitlist
                 

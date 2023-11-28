@@ -5,6 +5,7 @@ import numpy as np
 import gymnasium
 from gymnasium.spaces import Discrete
 
+from pettingzoo import ParallelEnv
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 

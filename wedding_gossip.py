@@ -16,6 +16,7 @@ from players.team_3 import Player as Player3
 from players.team_4 import Player as Player4
 from players.team_5 import Player as Player5
 from players.team_6 import Player as Player6
+from players.team_7 import Player as Player7
 
 from player_state import PlayerState
 
@@ -178,6 +179,9 @@ class WeddingGossip():
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 6:
                 self.shuffled_players.append(Player6(id, team_num, table_num, seat_num, gossip, color, self.T))
+                self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
+            elif team_num == 7:
+                self.shuffled_players.append(Player7(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             else:
                 self.shuffled_players.append(DefaultPlayer(id, team_num, table_num, seat_num, gossip, color, self.T))

@@ -29,6 +29,9 @@ class Player():
         # record the actions each player is taking at your table
         self.action_counts = {}
 
+        self.talk_actions = ['left', 'right']
+        self.listen_actions = ['right', 'left']
+
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     # list of thruples: player number, table num, seat num
@@ -88,50 +91,26 @@ class Player():
         # talk
         if action_type < talk_probability:
             direction = self.turn_counter % 2
-            gossip = random.choice(self.gossip_list)
-            self.recent_gossip_shared = gossip
-            
+            gossip = self.get_gossip_to_share(direction)
+
             # talk left on even turns
-            # check to see if gossip is in target player's knowledge base
-            # if gossip is not known by at least 2 players, talk, else listen
-            if direction == 0:
-                known_count = 0
-                for i in range(1, 4):
-                    target_player = self.seating_arrangement[(self.table_num, (self.seat_num - i) % 10)]
-                    if target_player != -1:
-                        if gossip in self.player_gossip_map[target_player]:
-                            known_count += 1
-                if known_count < 2:
-                    return 'talk', 'left', gossip
-                return 'listen', 'right'
-            # right
-            else:
-                known_count = 0
-                for i in range(1, 4):
-                    target_player = self.seating_arrangement[(self.table_num, (self.seat_num + i) % 10)]
-                    if target_player != -1:
-                        if gossip in self.player_gossip_map[target_player]:
-                            known_count += 1
-                if known_count < 2:
-                    return 'talk', 'right', gossip
-                return 'listen', 'left'
-        
+            if gossip:
+                self.recent_gossip_shared = gossip
+                return 'talk', self.talk_actions[direction], gossip
+            return 'listen', self.listen_actions[direction]
+
         # listen
         elif action_type < 85:
             direction = self.turn_counter % 2
             # listen left on odd turns
-            if direction == 1:
-                return 'listen', 'left'
-            # right
-            else:
-                return 'listen', 'right'
+            return 'listen', self.listen_actions[direction]
 
         # move
         print("Moving")
 
         # find closest player with the best gossip in their knowledge base
         # if no such player exists, move to a random open seat
-        
+
         # sort open seats by how crowded they are 3 seats in each direction
         seat_count = {}
         for seat in self.open_seats:
@@ -168,12 +147,31 @@ class Player():
         # feedback of form String + String + player number
         for feed in feedback:
             result = feed.split(' ')
-            if result[0] == "Nod":
+            if result[0] == "Nod" or result[0] == "Shake":
                 self.player_gossip_map[int(result[2])].append(self.recent_gossip_shared)
-        
 
     # add learned gossip to our gossip list and to the gossip list of the player we received it from... to be used later
     def get_gossip(self, gossip_item, gossip_talker):
         self.gossip_list.append(gossip_item)
         self.player_gossip_map[gossip_talker].append(gossip_item)
-        
+
+    # share gossip value within a range determined by turn count
+    # check to see if gossip is in target player's knowledge base
+    # if gossip is not known by at least 2 players, talk, else listen
+    def get_gossip_to_share(self, direction):
+        # TODO: play around with value 30- currently every 30 turns, decrease range by 10 (i.e go from 70%-100% to 60%-90%)
+        ceiling = (1 - ((self.turn_counter // 30) * .1)) * 90  # start at 100% of 90, then drops to 90% of 90, etc. for top of range
+        floor = ceiling - 27  # 30% of 90 is 27
+        gossip_in_range = [x for x in self.gossip_list if ceiling >= x >= floor]
+        gossip_in_range.sort(reverse=True)
+        neigh_dir = 1 if direction == 0 else -1
+        for gos in gossip_in_range:
+            known_count = 0
+            for i in range(1, 4):
+                target_player = self.seating_arrangement[(self.table_num, (self.seat_num - (neigh_dir * i)) % 10)]
+                if target_player != -1:
+                    if gos in self.player_gossip_map[target_player]:
+                        known_count += 1
+            if known_count < 2:
+                return gos
+        return None

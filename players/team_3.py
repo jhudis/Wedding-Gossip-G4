@@ -15,11 +15,15 @@ class Player():
         self.turns = 0
 
         self.priorityGossip = PriorityQueue()
+        self.priorityGossip.put(self.unique_gossip)
+        
         self.currGossip = unique_gossip #the highest gossip we currently have
         self.prevGossip = unique_gossip #the gossip we start with or the highest gossip we got from the prev table
-        self.heardPlayers = [] 
-        self.move = False
-        self.prevTable = table_num
+        self.heardPlayers = [] #players we have heard from
+        self.move = False  #are we moving this turn
+        self.prevTable = table_num #the table we were just at
+        self.emptySeats = [] #the current empty seats, updated every turn at observe_before_turn()
+        self.uniquePlayerSeed = random.randint(1, 9) # we will have 9 distinct player types
 
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
@@ -40,9 +44,21 @@ class Player():
             if table_num == self.table_num:
                 if player_id in self.heardPlayers:
                     heardPlayers += 1
-        if heardPlayers > 6: 
+        if heardPlayers > 5: 
             self.move = True
+
+        self.emptySeats = self._emptySeats(player_positions)
         pass
+
+    def _emptySeats(self, player_positions):
+        playerSeats = [[position[1], position[2]] for position in player_positions]
+        emptySeats = []
+        for table in range(0, 10):
+            for seat in range(0, 10):
+                currSeat = [table, seat]
+                if currSeat not in playerSeats:
+                    emptySeats.append([table, seat])
+        return emptySeats
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
     # did (i.e., talked/listened in what direction, or moved)
@@ -56,55 +72,36 @@ class Player():
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
         self.turns+=1
-        action_type = self.turns%2
+        direction = random.randint(0, 1)
 
-        #move every 5 turns or when ur gossip is 20 greater than previous gossip maximum
-        if self.turns % 5 == 0 or (self.currGossip-self.prevGossip) > 19 or self.move:
+        #move every 5 turns or when your new gossip is 20 greater than previous gossip maximum
+        if self.turns % (self.uniquePlayerSeed+5) == 0 or (self.currGossip-self.prevGossip) > 19 or self.move:
             self.prevGossip = self.currGossip
-            table1 = random.randint(0, 9)
-            seat1 = random.randint(0, 9)
-
-            table2 = random.randint(0, 9)
-            while table2 == table1:
-                table2 = random.randint(0, 9)
-
-            seat2 = random.randint(0, 9)
-            
-            return 'move', [[table1, seat1], [table2, seat2]]
-
+            return 'move', self.emptySeats
 
         # talk
-        if self.currGossip>50:
-            direction = random.randint(0, 1)
+        if self.currGossip/90 > random.random():
+
+            #get random gossip from the top 3 highest gossip
+            maxGossipRange = 2 if self.priorityGossip.qsize() > 2 else 0
+            gossipNum = random.randint(0, maxGossipRange)
+            gossip = self.priorityGossip.queue[gossipNum]
+
             # left
-            if action_type == 0:
-                return 'talk', 'left', self.currGossip
+            if direction == 0:
+                return 'talk', 'left', gossip
             # right
             else:
-                return 'talk', 'right', self.currGossip
+                return 'talk', 'right', gossip
         
         # listen
         else:
-            direction = random.randint(0, 1)
             # left
-            if action_type == 0:
+            if direction == 0:
                 return 'listen', 'left'
             # right
             else:
                 return 'listen', 'right'
-
-        # move
-        # else:
-        #     table1 = random.randint(0, 9)
-        #     seat1 = random.randint(0, 9)
-
-        #     table2 = random.randint(0, 9)
-        #     while table2 == table1:
-        #         table2 = random.randint(0, 9)
-
-        #     seat2 = random.randint(0, 9)
-
-        #     return 'move', [[table1, seat1], [table2, seat2]]
     
     def feedback(self, feedback):
         pass

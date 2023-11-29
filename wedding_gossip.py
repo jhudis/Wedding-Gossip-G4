@@ -14,7 +14,7 @@ from players.team_1 import Player as Player1
 from players.team_2 import Player as Player2
 from players.team_3 import Player as Player3
 from players.team_4 import Player as Player4
-from players.team_5 import Player as Player5
+from players.rand_player import Player as Player5
 from players.team_6 import Player as Player6
 
 from player_state import PlayerState
@@ -162,25 +162,25 @@ class WeddingGossip():
             self.tables[table_num].seats[seat_num] = [id, team_num]
 
             if team_num == 1:
-                self.shuffled_players.append(Player1(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player1(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 2:
-                self.shuffled_players.append(Player2(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player2(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 3:
-                self.shuffled_players.append(Player3(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player3(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 4:
-                self.shuffled_players.append(Player4(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player4(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 5:
-                self.shuffled_players.append(Player5(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player5(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 6:
-                self.shuffled_players.append(Player6(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(Player6(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             else:
-                self.shuffled_players.append(DefaultPlayer(id, team_num, table_num, seat_num, gossip, color))
+                self.shuffled_players.append(DefaultPlayer(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
 
         self.players = sorted(self.shuffled_players, key=lambda x: x.id)
@@ -288,7 +288,7 @@ class WeddingGossip():
                 img= (Image.open("./icons/" + str(table) + ".png"))
 
                 # Resize the Image using resize method
-                resized_image= img.resize((14 * self.scale,14 * self.scale), Image.ANTIALIAS)
+                resized_image= img.resize((14 * self.scale,14 * self.scale), Image.LANCZOS)
                 self.icons.append(ImageTk.PhotoImage(resized_image))
 
                 self.canvas.create_image(interval * i + 8 * self.scale, interval * j + 16 * self.scale,anchor=NW,image=self.icons[table])
@@ -469,12 +469,41 @@ class WeddingGossip():
 
     def _play_game(self):
         self.attendee_logs = []
+        scores = {}
+        avg_scores = {}
         if self.turn > self.T:
             self.game_state = "over"
             with open(self.result, 'a') as f:
                 f.write("Results\n")
                 f.write("Group Score: " + str(round(self.group_score / 90, 2)) + "\n")
 
+            for index, player_state in enumerate(self.player_states):
+                team_num = player_state.team_num
+                if team_num in scores.keys():
+                    scores[team_num].append(player_state.individual_score)
+                else:
+                    scores[team_num] = [player_state.individual_score]
+
+            with open(self.result, 'a') as f:
+                f.write("\n\n\nAverage Team Scores\n")
+
+            for team in sorted(scores.keys()):
+                print(team)
+                total = 0
+                total_score = 0
+                for score in scores[team]:
+                    total_score += score
+                    total += 1
+
+                avg_scores[team] = round(total_score / total, 2)
+
+            sorted_avg_scores = sorted(avg_scores.items(), key=lambda x:x[1])[::-1]
+            for team, score in sorted_avg_scores:
+                with open(self.result, 'a') as f:
+                    f.write("Team " + str(team) + ": " + str(score) + "\n")
+
+            with open(self.result, 'a') as f:
+                f.write("\n\n\nAttendee Scores\n")
             for index, player_state in enumerate(self.player_states):
                 with open(self.result, 'a') as f:
                     f.write("Attendee: " + str(player_state.id) + " Team: " + str(player_state.team_num) + " Individual Score: " + str(player_state.individual_score) + " Initial Gossip: " + str(player_state.initial_gossip) + "\n")

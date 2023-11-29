@@ -254,7 +254,7 @@ class WeddingGossip():
                 self.canvas.itemconfigure(self.turn_eyes_comp[table][seat], fill=color, outline=color)
                 self.canvas.itemconfigure(self.left_eyes_comp[table][seat], fill="#000000", outline="#000000")
                 self.canvas.itemconfigure(self.right_eyes_comp[table][seat], fill="#000000", outline="#000000")
-                self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#FD1005", width=5, style="chord")
+                self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#ffffff", width=5, style="chord")
                     
             for index, player_state in enumerate(self.shuffled_player_states):
                 team_num = player_state.team_num
@@ -372,7 +372,7 @@ class WeddingGossip():
             seat = player_state.seat_num
             color = player_state.color
             id = player_state.id
-            self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#FD1005", width=5, style="chord")
+            self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#000000", width=5, style="chord")
             self.canvas.itemconfigure(self.turn_eyes_comp[table][seat], outline=color, fill=color)
             self.canvas.itemconfigure(self.left_eyes_comp[table][seat], outline="#000000", fill="#000000")
             self.canvas.itemconfigure(self.right_eyes_comp[table][seat], outline="#000000", fill="#000000")
@@ -396,13 +396,13 @@ class WeddingGossip():
         self.turn_comp = self.canvas.create_text(30 * self.scale, 3.5 * self.scale, anchor="nw", font=('Helvetica', int(1.8 * self.scale), 'bold'), text="Turn: " + str(self.turn) + "/" + str(self.T))
         self.group_score_comp = self.canvas.create_text(100 * self.scale, 3.5 * self.scale, anchor="nw", font=('Helvetica', int(1.8 * self.scale), 'bold'), text="Group Score: " + str(round(self.group_score / 90, 2)))
 
-        pause_btn = Button(self.canvas, width=int(0.4 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.pause, font=('freemono', int(1.3 * self.scale), 'bold'), text="PAUSE", bg="#E3AB62")
+        pause_btn = Button(self.canvas, width=int(0.8 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.pause, font=('freemono', int(1.3 * self.scale), 'bold'), text="PAUSE", bg="#E3AB62")
         pause_btn.place(x=60 * self.scale, y=1 * self.scale)
 
-        resume_btn = Button(self.canvas, width=int(0.4 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.resume, font=('freemono', int(1.3 * self.scale), 'bold'), text="START/\nRESUME", bg="#E3AB62")
+        resume_btn = Button(self.canvas, width=int(0.8 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.resume, font=('freemono', int(1.3 * self.scale), 'bold'), text="START/\nRESUME", bg="#E3AB62")
         resume_btn.place(x=70 * self.scale, y=1 * self.scale)
 
-        step_btn = Button(self.canvas, width=int(0.4 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.step, font=('freemono', int(1.3 * self.scale), 'bold'), text="STEP", bg="#E3AB62")
+        step_btn = Button(self.canvas, width=int(0.8 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.step, font=('freemono', int(1.3 * self.scale), 'bold'), text="STEP", bg="#E3AB62")
         step_btn.place(x=80 * self.scale, y=1 * self.scale)
 
         self.canvas.pack()

@@ -106,7 +106,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             return {}, {}, {}, {}, {}
 
         # update the self.player_seat_map, and self.available_seats
-
+        self.actions = actions   
         for agent in self.agents:
             # get action - a 5x90x10x10 array
             curr_action = self.actions[agent] # cross check that this is the way to obtain the action!

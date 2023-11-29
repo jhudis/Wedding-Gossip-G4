@@ -1,4 +1,5 @@
 import random
+import math
 
 class Player():
     def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
@@ -11,9 +12,10 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
-        self.turn_num = 0
+        self.turn_num = -1
         self.player_positions = []
         self.player_actions = []
+        self.turns = turns
 
 
     def observe_before_turn(self, player_positions):
@@ -33,7 +35,7 @@ class Player():
         talk_or_listen_prob = random.random()
         highest_gossip_prob = max(self.gossip_list) / 90 
 
-        if talk_or_listen_prob <= highest_gossip_prob:
+        if talk_or_listen_prob <= 0.5:
             return 'talk'
         else:
             return 'listen'
@@ -42,18 +44,21 @@ class Player():
         '''Returns 'left' or 'right' for the given command (which must be 'talk' or 'listen').'''
         if self.turn_num % 2 == 0:
             if command == 'talk':
-                return 'left'
-            elif command == 'listen':
                 return 'right'
+            elif command == 'listen':
+                return 'left'
         else:
             if command == 'talk':
-                return 'right'
-            elif command == 'listen':
                 return 'left'
+            elif command == 'listen':
+                return 'right'
     
     def _get_gossip(self):
         '''Returns the gossip number we want to say.'''
-        return max(self.gossip_list)
+        # desired_gossip = 90
+        # desired_gossip = 90 - 89 / self.turns * self.turn_num
+        desired_gossip = 89 / math.log(self.turns + 1) * math.log(self.turns - self.turn_num + 1) + 1
+        return min(self.gossip_list, key=lambda gossip: abs(gossip - desired_gossip))
     
     def _get_seats(self):
         '''Returns an ordered list of empty seats to move to in the form [[table1, seat1], [table2, seat2], ...].'''
@@ -65,7 +70,29 @@ class Player():
                 seat = [table_num, seat_num]
                 if seat not in OccupiedSeats:
                     EmptySeats.append([table_num, seat_num])
-        return EmptySeats
+
+        random.shuffle(EmptySeats) #Shuffling the list of empty seats to randomize the order of the seats to remove bias.
+
+        #Sorting based on the seats with neighbors
+        temp1 =[]
+        temp2 =[]
+        temp3 =[]
+        for seat in EmptySeats:
+            if [seat[0], seat[1] + 1] not in EmptySeats and [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 in range(1, 10) or seat[1]-1 in range(1, 10)):
+                #If the seat has neighbors on both sides
+                temp1.append(seat)
+            elif ( [seat[0], seat[1] + 1] not in EmptySeats or [seat[0], seat[1] - 1] not in EmptySeats ) and (seat[1]+1 in range(1, 10) or seat[1]-1 in range(1, 10)):
+                #If the seat has neighbors on one side
+                temp2.append(seat) 
+            else:
+                #If the seat has no neighbors
+                temp3.append(seat)
+        
+        priority_EmptySeats = temp1 + temp2 + temp3
+        #print("Empty Seats: ", EmptySeats)
+        #print("Priority EmptySeats: ", priority_EmptySeats)
+
+        return priority_EmptySeats
 
 
     def get_action(self):
@@ -93,3 +120,5 @@ class Player():
     def get_gossip(self, gossip_item, gossip_talker):
         '''Respond to gossip told to us.'''
         pass
+        if gossip_item not in self.gossip_list:
+            self.gossip_list.append(gossip_item)

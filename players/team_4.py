@@ -70,7 +70,29 @@ class Player():
                 seat = [table_num, seat_num]
                 if seat not in OccupiedSeats:
                     EmptySeats.append([table_num, seat_num])
-        return EmptySeats
+
+        random.shuffle(EmptySeats) #Shuffling the list of empty seats to randomize the order of the seats to remove bias.
+
+        #Sorting based on the seats with neighbors
+        temp1 =[]
+        temp2 =[]
+        temp3 =[]
+        for seat in EmptySeats:
+            if [seat[0], seat[1] + 1] not in EmptySeats and [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 or seat[1]-1) in range(10):
+                #If the seat has neighbors on both sides
+                temp1.append(seat)
+            elif [seat[0], seat[1] + 1] not in EmptySeats or [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 or seat[1]-1) in range(10):
+                #If the seat has neighbors on one side
+                temp2.append(seat) 
+            else:
+                #If the seat has no neighbors
+                temp3.append(seat)
+        
+        priority_EmptySeats = temp1 + temp2 + temp3
+        #print("Empty Seats: ", EmptySeats)
+        #print("Priority EmptySeats: ", priority_EmptySeats)
+
+        return priority_EmptySeats
 
 
     def get_action(self):

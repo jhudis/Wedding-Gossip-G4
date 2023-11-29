@@ -78,10 +78,10 @@ class Player():
         temp2 =[]
         temp3 =[]
         for seat in EmptySeats:
-            if [seat[0], seat[1] + 1] not in EmptySeats and [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 or seat[1]-1) in range(10):
+            if [seat[0], seat[1] + 1] not in EmptySeats and [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 in range(1, 10) or seat[1]-1 in range(1, 10)):
                 #If the seat has neighbors on both sides
                 temp1.append(seat)
-            elif [seat[0], seat[1] + 1] not in EmptySeats or [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 or seat[1]-1) in range(10):
+            elif [seat[0], seat[1] + 1] not in EmptySeats or [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 in range(1, 10) or seat[1]-1 in range(1, 10)):
                 #If the seat has neighbors on one side
                 temp2.append(seat) 
             else:

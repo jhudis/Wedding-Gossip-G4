@@ -221,7 +221,7 @@ class Player():
         #dunction balance between heuristic and round number 
         #if gossip_heuristic is higher 
         round_num = self.round_number
-        thresh_value = 60 
+        thresh_value = 50 
         #right now linear - but may make more logarithmic or exponential 
         #say 100 rounds and there are 
         heuristic = gossip_heuristic
@@ -229,9 +229,9 @@ class Player():
         #to allow for range of 27 cuz acerage of top has a max of about 88
         #once we get a round number 
         #increment = 27/numrounds 
-        thresh = thresh_value + .33*round_num
-        '''print("this is the value:" + str(heuristic))
-        print("this is the thresh value:" + str(thresh))'''
+        thresh = thresh_value + .15*round_num
+        print("this is the value:" + str(heuristic))
+        #print("this is the thresh value:" + str(thresh))'''
         if heuristic > thresh:
             #pick a value 
             #take top 1/3 of scores stored 

@@ -145,7 +145,7 @@ class WeddingGossip():
         gossips = list(range(1, 91))
         random.shuffle(gossips)
 
-        colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080']
+        colors = ['#808080' ,'#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ffff', '#0000ff', '#8000ff', '#ff00ff', '#800040', '#804000', '#808000', '#408000', '#008080', '#800080']
 
         attendees = list(range(0, 90))
         random.shuffle(attendees)

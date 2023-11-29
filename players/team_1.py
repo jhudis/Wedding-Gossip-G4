@@ -38,6 +38,9 @@ class Player():
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     # list of thruples: player number, table num, seat num
     def observe_before_turn(self, player_positions):
+        print("JUST UPDATED")
+        self.open_seats = []
+        self.seating_arrangement = {}
         # populate seating arrangement
         for position in player_positions:
             self.seating_arrangement[(position[1], position[2])] = position[0]
@@ -53,6 +56,8 @@ class Player():
                     self.seating_arrangement[(i, j)] = -1
                     self.open_seats.append((i, j))
 
+        print("open seats", self.open_seats)
+
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
     # did (i.e., talked/listened in what direction, or moved)
     def observe_after_turn(self, player_actions):
@@ -64,7 +69,7 @@ class Player():
         for player_action in player_actions:
             player, action = player_action
 
-            print("player", player, "action", action)
+            # print("player", player, "action", action)
 
             self.previous_action[player] = action
 
@@ -85,16 +90,23 @@ class Player():
         pass
 
     def __check_actions_all_zeroes(self):
-        for player, actions in self.action_counts.items():
-            for action, directions in actions.items():
-                for direction, count in directions.items():
-                    if count != 0:
-                        return False
+        # if 22 in self.action_counts.keys():
+            # print("CAAZ!!! actions_counts of ", self.id, ": ", self.action_counts[22])
+
+        for player in self.action_counts.keys():
+            if player == self.id:
+                for action in self.action_counts[player].keys():
+                    for direction in self.action_counts[player][action].keys():
+                        if self.action_counts[player][action][direction] > 0:
+                            # print("player: ", player, "action: ", action, "direction: ", direction)
+                            # print("NAURRRRR: ", self.action_counts[player][action][direction])
+                            return False
+        # print("AYYYYYUYUYYYYYYYYYYYYYYYYYYYYYYY")
         return True
 
     def __move_to_empty_seat(self):
         # move
-        print("Moving")
+        # print("Moving")
 
         # find closest player with the best gossip in their knowledge base
         # if no such player exists, move to a random open seat
@@ -118,6 +130,9 @@ class Player():
             if seat[0][0] != self.table_num:  # move to a different table
                 waitlist.append([seat[0][0], seat[0][1]])
 
+        print("open seats", self.open_seats)
+        print("waitlist", waitlist)
+
         return 'move', waitlist
 
     def get_action(self):
@@ -129,6 +144,9 @@ class Player():
         # return 'move', priority_list: [[table number, seat number] ...]
 
         direction = self.turn_counter % 2
+        
+        # if 22 in self.action_counts.keys():
+        #     print("GA!!! actions_counts of ", self.id, ": ", self.action_counts[22])
 
         if self.turn_counter == 1:
             # talk if gossip > 60
@@ -168,7 +186,7 @@ class Player():
             players_by_seat = {}
             for table,seat in self.seating_arrangement.keys():
                 player = self.seating_arrangement[(table, seat)]
-                print("seating arr player", player)
+                # print("seating arr player", player)
 
                 # -1 = empty seat at that table
                 if player != -1:
@@ -187,6 +205,9 @@ class Player():
             # process people to the right
             my_prev_action, my_prev_direction = self.previous_action[self.id]
 
+            # print("my_prev_action", my_prev_action)
+            # print("my_prev_direction", my_prev_direction)
+
             if my_prev_action == "talk" and my_prev_direction == "left":
                 # look at opposite side
                 listen_count = 0
@@ -204,19 +225,20 @@ class Player():
                         # else:
                         #     move_count += 1
 
-
+                # print("listen count", listen_count)
+                # print("talk count", talk_count)
                 # update our dicts based on the actions we saw
                 if listen_count == 3:
                     self.action_counts[self.id]["talk"]["left"] = 0
-                else:
-                    self.action_counts[self.id]["talk"]["left"] -= 1
+                # elif self.action_counts[self.id]["talk"]["left"] != 0:
+                #     self.action_counts[self.id]["talk"]["left"] -= 1
 
 
                 # MOVE
                 # now check if we should move based on if all actions in self.action_counts go to 0
                 if self.__check_actions_all_zeroes():
                     # reset the actions counts to 2
-                    self.action_counts = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
+                    self.action_counts[self.id] = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
 
                     return self.__move_to_empty_seat()
 
@@ -224,8 +246,8 @@ class Player():
                 # check the OTHER side because we will have to talk to the RIGHT next turn for this condition
                 if listen_count > 1 and self.action_counts[self.id]["talk"]["right"] > 0:
                     return 'talk', self.talk_actions[direction], self.recent_gossip_shared
-                elif talk_count > 1:
-                    return 'listen', self.listen_actions[(direction + 1) % 2]
+                else:
+                    return 'listen', self.listen_actions[direction]
 
             elif my_prev_action == "talk" and my_prev_direction == "right":
                 # look at opposite side
@@ -243,27 +265,28 @@ class Player():
                         # else:
                         #     move_count += 1
 
-
+                # print("id: ", self.id, " listen count", listen_count)
+                # print("id: ", self.id, " talk count", talk_count)
 
                 # update our dicts based on the actions we saw
                 if listen_count == 3:
                     self.action_counts[self.id]["talk"]["right"] = 0
-                else:
-                    self.action_counts[self.id]["talk"]["right"] -= 1
+                # elif self.action_counts[self.id]["talk"]["right"] != 0:
+                #     self.action_counts[self.id]["talk"]["right"] -= 1
 
                 # MOVE
                 # now check if we should move based on if all actions in self.action_counts go to 0
                 if self.__check_actions_all_zeroes():
                     # reset the actions counts to 2
-                    self.action_counts = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
+                    self.action_counts[self.id] = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
 
                     return self.__move_to_empty_seat()
 
                 # check the OTHER side because we will have to talk to the LEFT next turn for this condition
                 if listen_count > 1 and self.action_counts[self.id]["talk"]["left"] > 0:
                     return 'talk', self.talk_actions[direction], self.recent_gossip_shared
-                elif talk_count > 1:
-                    return 'listen', self.listen_actions[(direction + 1) % 2]
+                else:
+                    return 'listen', self.listen_actions[direction]
 
 
             elif my_prev_action == "listen" and my_prev_direction == "left":
@@ -283,24 +306,25 @@ class Player():
                         #     move_count += 1
 
                 # update our dicts based on the actions we saw
-                if listen_count == 3:
+                if talk_count == 3:
                     self.action_counts[self.id]["listen"]["left"] = 0
-                else:
-                    self.action_counts[self.id]["listen"]["left"] -= 1
+                # elif self.action_counts[self.id]["listen"]["left"] != 0:
+                #     self.action_counts[self.id]["listen"]["left"] -= 1
 
                 # MOVE
                 # now check if we should move based on if all actions in self.action_counts go to 0
+                # print(self.__check_actions_all_zeroes())
                 if self.__check_actions_all_zeroes():
                     # reset the actions counts to 2
-                    self.action_counts = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
+                    self.action_counts[self.id] = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
 
                     return self.__move_to_empty_seat()
 
                 # check the OTHER side because we will have to talk to the LEFT next turn for this condition
                 if listen_count > 1 and self.action_counts[self.id]["talk"]["left"] > 0:
                     return 'talk', self.talk_actions[direction], self.recent_gossip_shared
-                elif talk_count > 1:
-                    return 'listen', self.listen_actions[(direction + 1) % 2]
+                else:
+                    return 'listen', self.listen_actions[direction]
 
 
             elif my_prev_action == "listen" and my_prev_direction == "right":
@@ -320,24 +344,24 @@ class Player():
                         #     move_count += 1
 
                 # update our dicts based on the actions we saw
-                if listen_count == 3:
+                if talk_count == 3:
                     self.action_counts[self.id]["listen"]["right"] = 0
-                else:
-                    self.action_counts[self.id]["listen"]["right"] -= 1
+                # elif self.action_counts[self.id]["listen"]["right"] != 0:
+                #     self.action_counts[self.id]["listen"]["right"] -= 1
 
                 # MOVE
                 # now check if we should move based on if all actions in self.action_counts go to 0
                 if self.__check_actions_all_zeroes():
                     # reset the actions counts to 2
-                    self.action_counts = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
+                    self.action_counts[self.id] = {"talk": {"right": 2, "left": 2}, "listen": {"right": 2, "left": 2}}
 
                     return self.__move_to_empty_seat()
 
                 # check the OTHER side because we will have to talk to the LEFT next turn for this condition
                 if listen_count > 1 and self.action_counts[self.id]["talk"]["right"] > 0:
                     return 'talk', self.talk_actions[direction], self.recent_gossip_shared
-                elif talk_count > 1:
-                    return 'listen', self.listen_actions[(direction + 1) % 2]
+                else:
+                    return 'listen', self.listen_actions[direction]
 
 
 

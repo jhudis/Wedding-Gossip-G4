@@ -133,17 +133,17 @@ class Player():
             #print('talking with a value of ' + str(val))
             #print("talker gossip len" + str(len(self.gossip_list)))
             if self.round_number%2 == 0: #is even, so do this 
-                return 'talk','left',val
+                return 'talk','right',val
 
             else: 
-                return 'talk','right',val
+                return 'talk','left',val
         if action == 'listen':
             #print('listening')
             #print("this is the length of this players gossip" + str(len(self.gossip_list)))
             if self.round_number%2 == 0:
-                return 'listen', 'right'
-            else: 
                 return 'listen', 'left'
+            else: 
+                return 'listen', 'right'
             
         else: #move 
             table1 = random.randint(0, 9)
@@ -221,7 +221,7 @@ class Player():
         #dunction balance between heuristic and round number 
         #if gossip_heuristic is higher 
         round_num = self.round_number
-        thresh_value = 50 
+        thresh_value = 45 
         #right now linear - but may make more logarithmic or exponential 
         #say 100 rounds and there are 
         heuristic = gossip_heuristic
@@ -230,7 +230,7 @@ class Player():
         #once we get a round number 
         #increment = 27/numrounds 
         thresh = thresh_value + .15*round_num
-        print("this is the value:" + str(heuristic))
+        #print("this is the value:" + str(heuristic))
         #print("this is the thresh value:" + str(thresh))'''
         if heuristic > thresh:
             #pick a value 
@@ -240,6 +240,7 @@ class Player():
             top_vals = math.floor(len(sorted_gossip)/5)
             random_index = random.randint(0, top_vals)
             gossip_return = sorted_gossip[random_index]
+            print("the gossip value player number " + str(self.id) + " is sharing is:" + str(gossip_return))
             return 'talk', gossip_return
         #otherwise generate a ratio of listen to move
         #ideally a split of about 20 speakers, 60 listerns, and 10 movers 
@@ -249,5 +250,7 @@ class Player():
         if decision <= 10:
             return 'move',0'''
         return 'listen',0
+
+        
 
 

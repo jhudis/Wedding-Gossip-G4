@@ -17,7 +17,7 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
-        
+        self.total_rounds = turns 
         #dictionary template -> dict3 = {'gossip_shared': '15,16,77', 'gossip_score': 55}
         #dictionary_temp = {'gossip_shared': [], 'gossip_score': unique_gossip}
         #list of dictionaries 
@@ -229,7 +229,10 @@ class Player():
         #to allow for range of 27 cuz acerage of top has a max of about 88
         #once we get a round number 
         #increment = 27/numrounds 
-        thresh = thresh_value + .15*round_num
+        increment = float(float(4.5)/self.total_rounds)
+        #increment = .15 
+        print("the value of the increment is " + str(increment))
+        thresh = thresh_value + increment*round_num
         #print("this is the value:" + str(heuristic))
         #print("this is the thresh value:" + str(thresh))'''
         if heuristic > thresh:
@@ -240,7 +243,7 @@ class Player():
             top_vals = math.floor(len(sorted_gossip)/5)
             random_index = random.randint(0, top_vals)
             gossip_return = sorted_gossip[random_index]
-            print("the gossip value player number " + str(self.id) + " is sharing is:" + str(gossip_return))
+            #print("the gossip value player number " + str(self.id) + " is sharing is:" + str(gossip_return))
             return 'talk', gossip_return
         #otherwise generate a ratio of listen to move
         #ideally a split of about 20 speakers, 60 listerns, and 10 movers 

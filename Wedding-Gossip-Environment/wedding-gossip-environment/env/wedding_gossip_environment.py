@@ -266,4 +266,4 @@ class WeddingGossipEnvironment(ParallelEnv):
 
 if __name__ == "__main__":
     env = WeddingGossipEnvironment()
-    parallel_api_test(env, num_cycles=10)
+    parallel_api_test(env, num_cycles=1_000_000)

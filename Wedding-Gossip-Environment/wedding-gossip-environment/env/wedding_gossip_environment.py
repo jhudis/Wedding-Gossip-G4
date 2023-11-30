@@ -67,14 +67,14 @@ class WeddingGossipEnvironment(ParallelEnv):
         # Not sure if we need this
         # self.available_seats = self._get_available_seats()
 
-        self.agent_gossips = defaultdict(list)
+        self.agent_gossips = [[] for _ in range(90)]
 
         init_obs = np.array([self.pos, [0 for _ in range(90)], [4 for _ in range(90)]])
-        observations = {a: init_obs for a in self.agents}
+        observations = {a: copy(init_obs) for a in self.agents}
         gossip = random.sample(range(90), 90)
         for i, a in enumerate(observations.keys()):
             observations[a][1][gossip[i]] = 1
-            self.agent_gossips[a].append(gossip[i])
+            self.agent_gossips[self.agent_name_mapping[a]].append(gossip[i])
 
         # Get dummy infos. Necessary for proper parallel_to_aec conversion
         infos = {a: {} for a in self.agents}
@@ -129,8 +129,9 @@ class WeddingGossipEnvironment(ParallelEnv):
                     complement = 2 if act == 1 else 3
                     if (n_act == complement):
                         possible_gossips.append((n_goss, n))
-                heard_gossip = max(possible_gossips)[0] if possible_gossips else 0
-                self.agent_gossips[aid].append(heard_gossip)
+                heard_gossip = max(possible_gossips)[0] if possible_gossips else -1
+                if heard_gossip > 0:
+                    self.agent_gossips[aid].append(heard_gossip)
                 for g, i in possible_gossips:
                     feedback[i].append((g == heard_gossip))
 
@@ -138,7 +139,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             # talk 
             elif act < 4:
                 # check if gossip to share is present in the player's gossip list
-                if goss not in self.agent_gossips[agent]:
+                if goss not in self.agent_gossips[aid]:
                     # penalty can't be too big - will discourage talking
                     rewards[agent] -= 10
                 else:
@@ -175,7 +176,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         terminations = {agent: False for agent in self.agents}
 
         # Check truncation conditions (overwrites termination conditions)
-        truncations = {a: self.timestep > N_TURNS for a in self.agents}
+        truncations = {a: (self.timestep > N_TURNS) for a in self.agents}
 
         # Exit condition
         if any(terminations.values()) or all(truncations.values()):

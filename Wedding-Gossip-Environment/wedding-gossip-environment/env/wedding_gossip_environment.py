@@ -7,6 +7,7 @@ from gymnasium.spaces import MultiDiscrete
 
 from pettingzoo import ParallelEnv
 from pettingzoo.utils import agent_selector, wrappers
+from pettingzoo.test import parallel_api_test
 from collections import defaultdict
 
 # Action Constants
@@ -40,10 +41,7 @@ class WeddingGossipEnvironment(ParallelEnv):
                 list(range(len(self.possible_agents)))
             )
         )
-        self._agent_selector = agent_selector(self.agents)
         self.render_mode = render_mode
-
-
 
     def reset(self, seed=None, options=None):
         """
@@ -54,6 +52,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         Returns the observations for each agent
         """
         self.agents = copy(self.possible_agents)
+        self._agent_selector = agent_selector(self.agents)
         self.timestep = 0
 
         # a hash mapping player_ids to where they are situated on the board
@@ -70,9 +69,9 @@ class WeddingGossipEnvironment(ParallelEnv):
 
         self.agent_gossips = defaultdict(list)
 
-        init_obs = np.array(self.pos, [0 for _ in range(90)], [4 for _ in range(90)])
+        init_obs = np.array([self.pos, [0 for _ in range(90)], [4 for _ in range(90)]])
         observations = {a: init_obs for a in self.agents}
-        gossip = random.shuffle(range(90))
+        gossip = random.sample(range(90), 90)
         for i, a in enumerate(observations.keys()):
             observations[a][1][gossip[i]] = 1
             self.agent_gossips[a].append(gossip[i])
@@ -112,7 +111,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         moves = []
         
         # process listens -> talk -> move in order
-        for agent, action in sorted(actions, key=(lambda x: x[1][0])):
+        for agent, action in sorted(actions.items(), key=(lambda x: x[1][0])):
             # get action 
             act, goss, s1, s2 = action
             aid = self.agent_name_mapping[agent]
@@ -135,7 +134,7 @@ class WeddingGossipEnvironment(ParallelEnv):
                 for g, i in possible_gossips:
                     feedback[i].append((g == heard_gossip))
 
-                reward[agent] += (heard_gossip + 1) * ALPHA
+                rewards[agent] += (heard_gossip + 1) * ALPHA
             # talk 
             elif act < 4:
                 # check if gossip to share is present in the player's gossip list
@@ -154,22 +153,23 @@ class WeddingGossipEnvironment(ParallelEnv):
                 move_choice_order.append(s1)
                 move_choice_order.append(s2)
                 # fill out the rest - 
-                for i in random.shuffle(range(10)):
+                for i in random.sample(range(10), 10):
                     if i not in move_choice_order:
                         move_choice_order.append(i)
                 moves.append((aid, move_choice_order))
 
         # resolve moves
-        for aid, pref in random.shuffle(moves):
-            reward["player_" + str(aid)] += GAMMA if self._move_player(aid, pref) else - DELTA
+        random.shuffle(moves)
+        for aid, pref in moves:
+            rewards["player_" + str(aid)] += GAMMA if self._move_player(aid, pref) else - DELTA
 
         observations = {}
         for a in self.agents:
             aid = self.agent_name_mapping[a]
             gossips = [(1 if g in self.agent_gossips[aid] else 0) for g in range(90)]
             tbl = aid // 10
-            tbl_actions = [(obs_actions[n] if self.pos[n] // 10 == tbl else 4) for n in self.agents]
-            observations[a] = np.array(self.pos, gossips, tbl_actions)
+            tbl_actions = [(obs_actions[self.agent_name_mapping[n]] if self.pos[self.agent_name_mapping[n]] // 10 == tbl else 4) for n in self.agents]
+            observations[a] = np.array([self.pos, gossips, tbl_actions])
 
         # Check termination conditions
         terminations = {agent: False for agent in self.agents}
@@ -180,6 +180,10 @@ class WeddingGossipEnvironment(ParallelEnv):
         # Exit condition
         if any(terminations.values()) or all(truncations.values()):
             self.agents = []
+
+        infos = {a: {} for a in self.agents}
+        
+        self.render()
 
         return observations, rewards, terminations, truncations, infos
 
@@ -194,7 +198,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         """
             array([seating, gossip, table actions])
         """
-        return MultiDiscrete(np.array([100 * 90], [2 * 90], [5 * 90]))
+        return MultiDiscrete(np.array([[100 * 90], [2 * 90], [5 * 90]]))
 
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
@@ -223,7 +227,8 @@ class WeddingGossipEnvironment(ParallelEnv):
         neighbor_ids = []
         for i in range(1, _count+1):
             curr_seat_id = (seat_id // 10 * 10) + ((seat_id - i) % 10)
-            neighbor_ids.append(self.seating[curr_seat_id])
+            if self.seating[curr_seat_id]:
+                neighbor_ids.append(self.seating[curr_seat_id])
         return neighbor_ids
 
     def _get_right_neighbors(self, seat_id, _count=3):
@@ -233,7 +238,8 @@ class WeddingGossipEnvironment(ParallelEnv):
         neighbor_ids = []
         for i in range(1, _count+1):
             curr_seat_id = (seat_id // 10 * 10) + ((seat_id + i) % 10)
-            neighbor_ids.append(self.seating[curr_seat_id])
+            if self.seating[curr_seat_id]:
+                neighbor_ids.append(self.seating[curr_seat_id])
         return neighbor_ids
 
     def _move_player(self, aid, priority_list):
@@ -255,3 +261,7 @@ class WeddingGossipEnvironment(ParallelEnv):
                 return True
 
         return False 
+
+if __name__ == "__main__":
+    env = WeddingGossipEnvironment()
+    parallel_api_test(env, num_cycles=1_000_000)

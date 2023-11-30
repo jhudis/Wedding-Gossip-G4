@@ -127,7 +127,7 @@ class WeddingGossipEnvironment(ParallelEnv):
                 for n in neighbors:
                     n_act, n_goss, _, _ = actions["player_" + str(n)]
                     complement = 2 if act == 1 else 3
-                    if (n_act == complement):
+                    if (n_act == complement and n_goss in self.agent_gossips[n]):
                         possible_gossips.append((n_goss, n))
                 heard_gossip = max(possible_gossips)[0] if possible_gossips else -1
                 if heard_gossip > 0:
@@ -189,7 +189,8 @@ class WeddingGossipEnvironment(ParallelEnv):
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
-        print(self.state)
+        print(self.pos)
+        print(self.agent_gossips)
     
     def close(self):
         pass
@@ -265,4 +266,4 @@ class WeddingGossipEnvironment(ParallelEnv):
 
 if __name__ == "__main__":
     env = WeddingGossipEnvironment()
-    parallel_api_test(env, num_cycles=1_000_000)
+    parallel_api_test(env, num_cycles=10)

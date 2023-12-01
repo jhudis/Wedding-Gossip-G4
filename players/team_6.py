@@ -169,7 +169,7 @@ class OtherPlayer():
         self.id = id
         # what direction they talked and what turn
         self.talks = []
-        # what direction they moved and what turn
+        # what direction they listened and what turn
         self.listens = []
         # what is there position at every turn
         self.positions = {}

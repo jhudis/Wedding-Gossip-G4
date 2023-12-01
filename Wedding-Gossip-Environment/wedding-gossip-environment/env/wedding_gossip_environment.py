@@ -127,7 +127,7 @@ class WeddingGossipEnvironment(ParallelEnv):
                 for n in neighbors:
                     n_act, n_goss, _, _ = actions["player_" + str(n)]
                     complement = 2 if act == 1 else 3
-                    if (n_act == complement and n_goss in self.agent_gossips[n]):
+                    if (n_act == complement and n_goss in self.agent_gossips[n] and n_goss not in self.agent_gossips[aid]):
                         possible_gossips.append((n_goss, n))
                 heard_gossip = max(possible_gossips)[0] if possible_gossips else -1
                 if heard_gossip > 0:
@@ -172,6 +172,8 @@ class WeddingGossipEnvironment(ParallelEnv):
             tbl_actions = [(obs_actions[self.agent_name_mapping[n]] if self.pos[self.agent_name_mapping[n]] // 10 == tbl else 4) for n in self.agents]
             observations[a] = np.array([self.pos, gossips, tbl_actions])
 
+        self.state = observations
+
         # Check termination conditions
         terminations = {agent: False for agent in self.agents}
 
@@ -189,8 +191,13 @@ class WeddingGossipEnvironment(ParallelEnv):
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
-        print(self.pos)
-        print(self.agent_gossips)
+        print("===== SEATING / MOVES =====")
+        for i in range(9):
+            table = [(self.seating[j], self.state["player_" + str(j)][2][j]) for j in range(i*10,(i+1)*10)]
+            print(f'Table {i}: {table}')
+        print("===== GOSSIP INVENTORY =====")
+        for i, g in enumerate(self.agent_gossips):
+            print(f"Player {i}: {g}")
     
     def close(self):
         pass
@@ -218,7 +225,7 @@ class WeddingGossipEnvironment(ParallelEnv):
     
     def _init_seating(self):
         # a function to create and update the self.seating list - 100 size list. None represents empty seat!
-        self.seating = [None] * 100
+        self.seating = [None for _ in range(100)]
         for pid, seat in enumerate(self.pos):
             self.seating[seat] = pid
 

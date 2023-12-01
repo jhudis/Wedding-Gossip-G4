@@ -14,14 +14,24 @@ class Player():
         self.group_score = 0
         self.individual_score = 0
 
-        self.consecutive_shakes = 0  # track consecutive shakes
-        self.turn_number = 0  # track the turn number
+        self.turn = 0  # track the turn number
         self.shake_pct = 0  # tracks the pct of shakes in the last listen
         self.latest_playerpositions = []
 
-    # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
+        # keep track of other players
+        self.other_players = {}
+        self.__init_other_players()
 
+    def __init_other_players(self):
+        for player in range(0,90):
+            if player == self.id: continue
+            self.other_players[player] = OtherPlayer(player)
+
+    # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     def observe_before_turn(self, player_positions):
+        for player, table, seat in player_positions:
+            if player == self.id: continue
+            self.other_players[player].add_position(table, seat, self.turn)
         self.latest_playerpositions = player_positions
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
@@ -31,15 +41,12 @@ class Player():
         pass
 
     def get_action(self):
-        self.turn_number += 1
+        self.turn += 1
 
         # TODO: change so that it moves when shake pct is high
         # if self.shake_pct >= .88:
-        if random.randint(0,2) == 1:
-            self.shake_pct = 0  # Reset the shake count
-            # Logic to move to a new seat
-            priList = self.__find_empty_seat()
-            return 'move', priList
+        if random.randint(0,2) == 1: 
+            return self.__move()
 
         if random.randint(0,1) == 0:
             self.current_gossip = self.__get_new_gossip()
@@ -70,16 +77,20 @@ class Player():
         random.shuffle(empty_seats)
 
         return empty_seats
+    
+    def __move(self):
+        self.shake_pct = 0
+        return 'move', self.__find_empty_seat()
             
     def __listen(self):
         # on even turns listen right
-        if self.turn_number % 2 == 0:
+        if self.turn % 2 == 0:
             return 'listen', 'right'
         return 'listen', 'left'
             
     def __talk(self):
         # on even turns talk left
-        if self.turn_number % 2 == 0:
+        if self.turn % 2 == 0:
             return 'talk', 'left', self.current_gossip.get_item()
         return 'talk', 'right', self.current_gossip.get_item()
     
@@ -97,11 +108,11 @@ class Player():
             # nod
             if response[0] == 'N':
                 nods += 1
-                self.current_gossip.add_nod(int(response[9:]), self.turn_number)
+                self.current_gossip.add_nod(int(response[9:]), self.turn)
             # shake
             else:
                 shakes += 1
-                self.current_gossip.add_shake(int(response[11:]), self.turn_number)
+                self.current_gossip.add_shake(int(response[11:]), self.turn)
         if nods == 0 and shakes == 0:
             self.shake_pct = 0
         else:
@@ -114,12 +125,12 @@ class Player():
         # log new gossip!
         if gossip == None:
             gossip = Gossip(gossip_item)
-            gossip.add_heard(gossip_talker, self.turn_number)
+            gossip.add_heard(gossip_talker, self.turn)
             self.gossip_list.append(gossip)
             self.gossip_list.sort(key=lambda x: x.get_item(), reverse=True)
         # alter existing gossip
         else:
-            gossip.add_heard(gossip_talker, self.turn_number)
+            gossip.add_heard(gossip_talker, self.turn)
 
     def __get_gossip(self, gossip_item):
         for gossip in self.gossip_list:
@@ -151,3 +162,27 @@ class Gossip():
 
     def add_heard(self, player: int, turn: int):
         self.heard.append([player, turn])
+
+# keep track of players, how often they talk, move, listen, at what table etc. 
+class OtherPlayer():
+    def __init__(self, id: int):
+        self.id = id
+        # what direction they talked and what turn
+        self.talks = []
+        # what direction they moved and what turn
+        self.listens = []
+        # what is there position at every turn
+        self.positions = {}
+
+    def get_id(self): return self.id
+
+    def add_talk(self, direction, turn): 
+        self.talks.append([direction, turn])
+    
+    def add_listen(self, direction, turn):
+        self.listens.append([direction, turn])
+    
+    def add_position(self, table, seat, turn):
+        self.positions[turn] = (table, seat)
+
+        

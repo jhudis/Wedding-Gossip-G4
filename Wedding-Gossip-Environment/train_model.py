@@ -11,11 +11,9 @@ from ray.tune.registry import register_env
 # from torch import nn
 
 from pettingzoo.butterfly import pistonball_v6
-import sys
-sys.path.append('wedding-gossip-environment/env')
 
-from wedding_gossip_environment import WeddingGossipEnvironment
-
+from wedding_gossip_env import wedding_gossip_environment_v0
+from wedding_gossip_env.env.wedding_gossip_environment import WeddingGossipEnvironment
 
 def env_creator(args):
     env = WeddingGossipEnvironment()

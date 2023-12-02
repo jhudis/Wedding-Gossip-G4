@@ -10,17 +10,12 @@ from ray.rllib.env.wrappers.pettingzoo_env import ParallelPettingZooEnv
 from ray.tune.registry import register_env
 # from torch import nn
 
-from pettingzoo.butterfly import pistonball_v6
-
 from wedding_gossip_env import wedding_gossip_environment_v0
 from wedding_gossip_env.env.wedding_gossip_environment import WeddingGossipEnvironment
 
 def env_creator(args):
     env = WeddingGossipEnvironment()
-    env = ss.flatten_v0(env)
-    env = ss.frame_stack_v1(env, 4)
     return env
-
 
 if __name__ == "__main__":
     ray.init()

@@ -34,6 +34,8 @@ class WeddingGossipEnvironment(ParallelEnv):
 
     def __init__(self, render_mode=None):
         self.possible_agents = ["player_" + str(r) for r in range(90)]
+        self.agents = copy(self.possible_agents)
+        self._agent_selector = agent_selector(self.agents)
 
         # optional: a mapping between agent name and player_ID
         self.agent_name_mapping = dict(
@@ -42,6 +44,26 @@ class WeddingGossipEnvironment(ParallelEnv):
             )
         )
         self.render_mode = render_mode
+        
+        self.observation_spaces = dict(
+            zip(
+                self.agents,
+                [
+                    MultiDiscrete(np.array([[100 for _ in range(90)], [2 for _ in range(90)], [5 for _ in range(90)]]))
+                ]
+                * 90,
+            )
+        )
+
+        self.action_spaces = dict(
+            zip(
+                self.agents,
+                [
+                    MultiDiscrete(np.array([5, 90, 10]))
+                ]
+                * 90,
+            )
+        )
 
     def reset(self, seed=None, options=None):
         """
@@ -51,14 +73,13 @@ class WeddingGossipEnvironment(ParallelEnv):
         hands that are played.
         Returns the observations for each agent
         """
-        self.agents = copy(self.possible_agents)
-        self._agent_selector = agent_selector(self.agents)
         self.timestep = 0
 
         # a hash mapping player_ids to where they are situated on the board
         # each player_id is mapped to a number from 0-99. 
         # table_num = value % 10 (0-9)
         # seat_num = value / 10 (0-9)
+        self.pos = None
         self.pos = random.sample(range(100), k=90)
         # update the self.seating list - 100 size list based on pos
         self.seating = None
@@ -113,7 +134,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         # process listens -> talk -> move in order
         for agent, action in sorted(actions.items(), key=(lambda x: x[1][0])):
             # get action 
-            act, goss, s1, s2 = action
+            act, goss, seat = action
             aid = self.agent_name_mapping[agent]
 
             rewards[agent] = 0
@@ -125,7 +146,7 @@ class WeddingGossipEnvironment(ParallelEnv):
 
                 possible_gossips = []
                 for n in neighbors:
-                    n_act, n_goss, _, _ = actions["player_" + str(n)]
+                    n_act, n_goss, _ = actions["player_" + str(n)]
                     complement = 2 if act == 1 else 3
                     if (n_act == complement and n_goss in self.agent_gossips[n] and n_goss not in self.agent_gossips[aid]):
                         possible_gossips.append((n_goss, n))
@@ -151,8 +172,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             # move
             else:
                 move_choice_order = []
-                move_choice_order.append(s1)
-                move_choice_order.append(s2)
+                move_choice_order.append(seat)
                 # fill out the rest - 
                 for i in random.sample(range(10), 10):
                     if i not in move_choice_order:
@@ -207,14 +227,14 @@ class WeddingGossipEnvironment(ParallelEnv):
         """
             array([seating, gossip, table actions])
         """
-        return MultiDiscrete(np.array([[100 * 90], [2 * 90], [5 * 90]]))
+        return self.observation_spaces[agent]
 
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
         """
             array([action, gossip, seat1, seat2])
         """
-        return MultiDiscrete(np.array([5, 90, 10, 10]))
+        return self.action_spaces[agent]
    
     # Do we need this?
     def _get_available_seats(self):

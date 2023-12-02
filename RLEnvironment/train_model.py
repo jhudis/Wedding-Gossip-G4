@@ -10,7 +10,7 @@ from ray.rllib.env.wrappers.pettingzoo_env import ParallelPettingZooEnv
 from ray.tune.registry import register_env
 # from torch import nn
 
-from wedding_gossip_env import wedding_gossip_environment_v0
+from wedding_gossip_env import wedding_gossip_environment_v1
 from wedding_gossip_env.env.wedding_gossip_environment import WeddingGossipEnvironment
 
 def env_creator(args):
@@ -20,7 +20,7 @@ def env_creator(args):
 if __name__ == "__main__":
     ray.init()
 
-    env_name = "version0"
+    env_name = "version1"
 
     register_env(env_name, lambda config: ParallelPettingZooEnv(env_creator(config)))
     # ModelCatalog.register_custom_model("CNNModelV2", CNNModelV2)

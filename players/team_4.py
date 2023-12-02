@@ -77,18 +77,36 @@ class Player():
         temp1 =[]
         temp2 =[]
         temp3 =[]
+        temp4 =[]
+        temp5 =[]
+        temp6 =[]
         for seat in EmptySeats:
-            if [seat[0], seat[1] + 1] not in EmptySeats and [seat[0], seat[1] - 1] not in EmptySeats and (seat[1]+1 in range(1, 10) or seat[1]-1 in range(1, 10)):
-                #If the seat has neighbors on both sides
-                temp1.append(seat)
-            elif ( [seat[0], seat[1] + 1] not in EmptySeats or [seat[0], seat[1] - 1] not in EmptySeats ) and (seat[1]+1 in range(1, 10) or seat[1]-1 in range(1, 10)):
-                #If the seat has neighbors on one side
-                temp2.append(seat) 
-            else:
-                #If the seat has no neighbors
-                temp3.append(seat)
-        
-        priority_EmptySeats = temp1 + temp2 + temp3
+            neighbors = []
+            #print("seat:", seat)
+            for i in range(-3, 4): # range for 3 neighbors on each side   
+                if [seat[0], (seat[1] + i) % 10] in OccupiedSeats and (seat[1] + i) % 10 in range(0, 10) and i != 0:
+                    neighbors.append([seat[0], (seat[1] + i) % 10])
+            neighbors = sorted(neighbors , key=lambda x: x[1])
+            #print("neighbor:", neighbors)
+            neighborSeats = [item[1] for item in neighbors]
+            if len(neighborSeats) >=5:
+                if len(neighborSeats) == 6:
+                    temp1.append(seat)
+                else:
+                    temp2.append(seat)
+            elif len(neighbors) >= 3:
+                if range(seat[1], max(neighborSeats) + 1) in neighborSeats or range(min(neighborSeats), seat[1] + 1) in neighborSeats:
+                    temp3.append(seat)
+                else:
+                    temp4.append(seat) 
+            elif len(neighbors)  >= 1:
+                if range(seat[1], max(neighborSeats) + 1) in neighborSeats or range(min(neighborSeats), seat[1] + 1) in neighborSeats:
+                    temp5.append(seat)
+                else:
+                    temp6.append(seat)
+        #print("Done")
+
+        priority_EmptySeats = temp1 + temp2 + temp3 + temp4 + temp5 + temp6
         #print("Empty Seats: ", EmptySeats)
         #print("Priority EmptySeats: ", priority_EmptySeats)
 

@@ -1,3 +1,4 @@
+import os
 import random
 import functools
 import numpy as np
@@ -5,10 +6,18 @@ import numpy as np
 import gymnasium
 from gymnasium.spaces import Discrete
 
-from pettingzoo import ParallelEnv
-from pettingzoo import AECEnv
-from pettingzoo.utils import agent_selector, wrappers
+from ray.rllib.algorithms.ppo import PPO
+from ray.rllib.algorithms.ppo import PPOConfig
+from RLEnvironment.wedding_gossip_env.env.wedding_gossip_environment import WeddingGossipEnvironment
+from ray.rllib.env.multi_agent_env import MultiAgentEnv, make_multi_agent # from - https://discuss.ray.io/t/bug-env-must-be-one-of-the-supported-types-baseenv-gym-env-multiagentenv-vectorenv-remotebaseenv/5704/2
+from ray.rllib.algorithms.algorithm import Algorithm
+from ray.rllib.env.wrappers.pettingzoo_env import ParallelPettingZooEnv
+from ray.tune.registry import register_env
+import ray
 
+CHECKPOINT_PATH="RLEnvironment/~/results/version0/PPO/PPO_version0_f6458_00000_0_2023-12-01_20-41-50/params.json"
+
+__all__ = ["WeddingGossipEnvironment"]
 
 class Player():
     def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
@@ -16,22 +25,21 @@ class Player():
         self.team_num = team_num
         self.table_num = table_num
         self.seat_num = seat_num
+        self.seat_id = self.table_num * 10 + seat_num # 0-99 format of seating
+
         self.color = color
         self.unique_gossip = unique_gossip
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
 
-
+        """
         # each tuple stores the following for seat 'seat_num' at table 'table_num'
         # 0 index - last observed action done by the player (initialized to None) - can be 'speak' or 'listen'
         # 1 index - direction of the action represented in action 0 (initialized to None) - can be 'left' or right
         # 2 index - player_id of last observed player at the seat (initialized to None)
         # 3 index - time_stamp of last observation (initialized to -1)
-        self._curr_state = {table_num: {seat_num: (None, None, None, -1) for seat_num in range(10)} for table_num in range(10)}
-
-        # update it at every step! (currently updating it when the 'observe_after_turn' is called)
-        self.time_stamp = 0
+        self._curr_state = {seat_id: (None, None, None, -1) for seat_num in range(10)} for table_num in range(10)}
 
         # a hash mapping player_ids to where they are situated on the board
         # each player_id is mapped to (table_num, seat_num)
@@ -44,6 +52,31 @@ class Player():
                               ('speak', 'right'): 2,
                               ('listen', 'left'): 3,
                               ('listen', 'right'): 4}
+        """
+
+        # update it at every step! (currently updating it when the 'observe_after_turn' is called)
+        self.time_stamp = 0
+        
+        # Most recent 4 observation spaces:
+        # dimension - 90        x       90    x 90 (#players)
+        #             100       x       2     x  5
+        #             #seats    x gossip      x ll/lr/tl/tr/move
+        self.observations = {'seating': [-1] * 90,
+                             'gossip':  [False] * 90,
+                             'actions': [4] * 90}
+        
+        # update our current position in observations!
+        self.observations['seating'][self.id] = self.seat_id # where we are sitting
+        self.observations['gossip'][unique_gossip - 1] = True # had to subtract one, because the gossips go from 1-90
+
+        self.action_to_val_map = {'listen-left':    0,
+                                  'listen-right':   1,
+                                  'talk-left':      2,
+                                  'talk-right':     3}
+        
+        # load the trained model
+        self.ppo_model = self.load_trained_model()
+        # PPO.from_checkpoint(CHECKPOINT_PATH)
 
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
@@ -52,13 +85,16 @@ class Player():
             player_positions - 3-dimensional tuple: (player_id, table_num, seat_num)
         """
 
-        print(f'Before:- team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num} || player_positions - {player_positions}')
-        for player_info in player_positions:
-            # update the seating into the self._curr_state variable
-            self._curr_state[player_info[1]][player_info[2]][2] = player_info[0]
-            
-            # also update the self.player_seat_map for future reference
-            self.player_seat_map[player_info[0]] = (player_info[1], player_info[2])
+        print(f'Before:- id - {self.id}, team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num}, gossip_list - {self.gossip_list} || player_positions - {player_positions}')
+
+        # update the observations['seating']
+        for inst in player_positions:
+            self.observations['seating'][inst[0]] = inst[1] * 10 + inst[2]
+        
+        # also update current seat_id, table_num, seat_num etc. 
+        self.seat_id   = self.observations['seating'][self.id]
+        self.table_num = self.observations['seating'][self.id] // 10
+        self.seat_num  = self.observations['seating'][self.id] % 10
 
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
@@ -70,14 +106,15 @@ class Player():
 
         # update the global timer
         self.time_stamp += 1
-        print(f'After:- team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num} || player_positions - {player_positions}')
-        for player_info in player_positions:
-            # Get the seat info for this player
-            curr_table_num, curr_seat_num = self.player_seat_map[player]
+        print(f'After:- id - {self.id}, team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num}, gossip_list - {self.gossip_list} || player_actions - {player_actions}')
 
-            # update the self._curr_state variable with the current observed information
-            self._curr_state[curr_table_num][curr_seat_num][0] = player_info[1][0]
-            self._curr_state[curr_table_num][curr_seat_num][1] = player_info[1][1]
+        # update the observations['action']
+        # reset everthing to 4 i.e. none first
+        self.observations['actions'] = [4] * 90
+        for inst in player_actions:
+            self.observations['actions'][inst[0]] = self.action_to_val_map[inst[1][0] + '-' + inst[1][1]]
+        
+        # for seat_id in range(self.table_num * 10, self.table_num * 10 + 10):
 
     def get_action(self):
         # return 'talk', 'left', <gossip_number>
@@ -85,6 +122,8 @@ class Player():
         # return 'listen', 'left', 
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
+
+        flattened_observation = self.observations['seating'].extend(self.observations['gossip']).extend(self.observations['actions'])
 
         action_type = random.randint(0, 2)
 
@@ -123,13 +162,59 @@ class Player():
             return 'move', [[table1, seat1], [table2, seat2]]
     
     def feedback(self, feedback):
-        pass
+        print('Feedback:', feedback)
 
     def get_gossip(self, gossip_item, gossip_talker):
-        pass
+        print('Get gossip:', gossip_item, gossip_talker)
+
+        # update the observation['gossip']
+        self.observations['gossip'][gossip_item - 1] = True # had to subtract one, because the gossips go from 1-90
+    
+    def env_creator(self, args):
+        env = WeddingGossipEnvironment()
+        return env
+
+    def load_trained_model(self):
+        # return Algorithm.from_checkpoint(CHECKPOINT_PATH)
+        # """
+        env_name = "version0"
+
+        ray.init()
+
+        register_env(env_name, lambda config: PettingZooEnv(self.env_creator()))
+        # return PPO.from_checkpoint(CHECKPOINT_PATH)
+
+        config = (
+            PPOConfig()
+            .environment(env=env_name, clip_actions=True, disable_env_checking=True)
+            .rollouts(num_rollout_workers=4, rollout_fragment_length=128)
+            .training(
+                train_batch_size=512,
+                lr=2e-5,
+                gamma=0.99,
+                lambda_=0.9,
+                use_gae=True,
+                clip_param=0.4,
+                grad_clip=None,
+                entropy_coeff=0.1,
+                vf_loss_coeff=0.25,
+                sgd_minibatch_size=64,
+                num_sgd_iter=10,
+            )
+            .debugging(log_level="ERROR")
+            .framework(framework="torch")
+            .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
+        )
+
+        # found this here - https://docs.ray.io/en/master/rllib/rllib-training.html#configuring-rllib-algorithms
+        # Got here from long github discussion here - https://github.com/ray-project/ray/issues/4569
+        algo = PPO(config=config, env=WeddingGossipEnvironment)
+        return algo.restore(CHECKPOINT_PATH)
+        # """
+
+'''
 
 ############### Ignore from this point onwards - code parking lot
-
 
 # implementation of the reward function goes here!
 def reward_func(_states, _action, player_info):
@@ -387,3 +472,4 @@ class game_env(AECEnv):
 #                     ('listen', 'right'): 4,
 #                     ("don't know", "don't know"): 5,
 #                     ('empty', 'empty'): 6}
+'''

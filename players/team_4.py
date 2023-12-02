@@ -133,6 +133,7 @@ class Player():
     
     def feedback(self, feedback):
         '''Respond to feedback from a person we talked to.'''
+        
         list = [[item[0], item[1], item[2]] for item in self.player_positions if item[1] == self.table_num]
         OccupiedSeatsAtTable = [[item[1], item[2]] for item in list]
         selfActionAtTable = []
@@ -155,17 +156,20 @@ class Player():
                 CurrentNeighbors2.append(cell)
     
         if feedback and feedback[0].startswith('Shake Head'):
-            if selfActionAtTable[2] == "left":
+            if selfActionAtTable and selfActionAtTable[2] == "left":
                 print("Left Player Shook Head, should turn right")
+                return 'right'
             else:
                 print("Right Player Shook Head, should turn left")
-
+                return 'left'
         print("feedback: ", feedback)
         print("selfPosition: ", selfPosition)
         print("OccupiedSeatsAtTable: ", OccupiedSeatsAtTable)
         print("CurrentNeighbors2: ", CurrentNeighbors2)
         print("CurrentActionaAtTable: ", selfActionAtTable)
         print("Done")
+
+
         pass
 
 

@@ -133,10 +133,45 @@ class Player():
     
     def feedback(self, feedback):
         '''Respond to feedback from a person we talked to.'''
+        list = [[item[0], item[1], item[2]] for item in self.player_positions if item[1] == self.table_num]
+        OccupiedSeatsAtTable = [[item[1], item[2]] for item in list]
+        selfActionAtTable = []
+        for item in self.player_actions:
+            if item[0] == self.id:
+                selfActionAtTable = [item[0], item[1][0], item[1][1]] 
+
+        selfPosition = [self.table_num, self.seat_num]
+        CurrentNeighbors = []
+        CurrentNeighbors2 = []
+
+
+        for i in range(-3, 4):
+            if [selfPosition[0], (selfPosition[1] + i) % 10] in OccupiedSeatsAtTable and (selfPosition[1] + i) % 10 in range(0, 10) and i != 0:
+                CurrentNeighbors.append([selfPosition[0], (selfPosition[1] + i) % 10])
+        
+        for cell in list:
+            sub_cell = cell[1:]
+            if sub_cell in CurrentNeighbors:
+                CurrentNeighbors2.append(cell)
+    
+        if feedback and feedback[0].startswith('Shake Head'):
+            if selfActionAtTable[2] == "left":
+                print("Left Player Shook Head, should turn right")
+            else:
+                print("Right Player Shook Head, should turn left")
+
+        print("feedback: ", feedback)
+        print("selfPosition: ", selfPosition)
+        print("OccupiedSeatsAtTable: ", OccupiedSeatsAtTable)
+        print("CurrentNeighbors2: ", CurrentNeighbors2)
+        print("CurrentActionaAtTable: ", selfActionAtTable)
+        print("Done")
         pass
+
+
+   
 
     def get_gossip(self, gossip_item, gossip_talker):
         '''Respond to gossip told to us.'''
-        pass
         if gossip_item not in self.gossip_list:
             self.gossip_list.append(gossip_item)

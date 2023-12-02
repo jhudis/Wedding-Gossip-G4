@@ -20,7 +20,7 @@ def env_creator(args):
 if __name__ == "__main__":
     ray.init()
 
-    env_name = "version1"
+    env_name = "version0"
 
     register_env(env_name, lambda config: ParallelPettingZooEnv(env_creator(config)))
     # ModelCatalog.register_custom_model("CNNModelV2", CNNModelV2)
@@ -51,7 +51,8 @@ if __name__ == "__main__":
         "PPO",
         name="PPO",
         stop={"timesteps_total": 2028},
-        checkpoint_freq=10,
+        checkpoint_freq=1,
         local_dir="~/results/" + env_name,
         config=config.to_dict(),
+        keep_checkpoints_num=5,
     )

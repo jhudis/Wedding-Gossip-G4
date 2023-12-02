@@ -11,11 +11,12 @@ from ray.rllib.algorithms.ppo import PPOConfig
 from RLEnvironment.wedding_gossip_env.env.wedding_gossip_environment import WeddingGossipEnvironment
 from ray.rllib.env.multi_agent_env import MultiAgentEnv, make_multi_agent # from - https://discuss.ray.io/t/bug-env-must-be-one-of-the-supported-types-baseenv-gym-env-multiagentenv-vectorenv-remotebaseenv/5704/2
 from ray.rllib.algorithms.algorithm import Algorithm
-from ray.rllib.env.wrappers.pettingzoo_env import ParallelPettingZooEnv
+from ray.rllib.env.wrappers.pettingzoo_env import PettingZooEnv
 from ray.tune.registry import register_env
 import ray
+from ray import tune
 
-CHECKPOINT_PATH="RLEnvironment/~/results/version0/PPO/PPO_version0_f6458_00000_0_2023-12-01_20-41-50/params.json"
+CHECKPOINT_PATH="RLEnvironment/~/results/version0/PPO/PPO_version0_f2865_00000_0_2023-12-02_13-38-12/checkpoint_000000"
 
 __all__ = ["WeddingGossipEnvironment"]
 
@@ -168,15 +169,17 @@ class Player():
         # update the observation['gossip']
         self.observations['gossip'][gossip_item - 1] = True # had to subtract one, because the gossips go from 1-90
 
+    def env_creator(self, args):
+        env = WeddingGossipEnvironment()
+        return env
+
     def load_trained_model(self):
         # return Algorithm.from_checkpoint(CHECKPOINT_PATH)
         # """
         env_name = "version0"
 
-        ray.init()
-
-        register_env(env_name, lambda config: PettingZooEnv(self.env_creator()))
-        # return PPO.from_checkpoint(CHECKPOINT_PATH)
+        register_env(env_name, lambda config: PettingZooEnv(self.env_creator(config)))
+        # # return PPO.from_checkpoint(CHECKPOINT_PATH)
 
         config = (
             PPOConfig()
@@ -200,8 +203,10 @@ class Player():
             .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
         )
 
+        return PPO.from_checkpoint(CHECKPOINT_PATH)
+
         # found this here - https://docs.ray.io/en/master/rllib/rllib-training.html#configuring-rllib-algorithms
         # Got here from long github discussion here - https://github.com/ray-project/ray/issues/4569
-        algo = PPO(config=config, env=WeddingGossipEnvironment)
-        return algo.restore(CHECKPOINT_PATH)
+        # algo = PPO(config=config, env=WeddingGossipEnvironment)
+        # return algo.restore(CHECKPOINT_PATH)
         # """

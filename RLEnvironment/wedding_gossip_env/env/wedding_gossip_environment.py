@@ -49,7 +49,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             zip(
                 self.agents,
                 [
-                    MultiDiscrete(np.array([[100 for _ in range(90)], [2 for _ in range(90)], [5 for _ in range(90)]]))
+                    MultiDiscrete(np.array([100 for _ in range(90)] + [2 for _ in range(90)] + [5 for _ in range(90)]))
                 ]
                 * 90,
             )
@@ -90,11 +90,11 @@ class WeddingGossipEnvironment(ParallelEnv):
 
         self.agent_gossips = [[] for _ in range(90)]
 
-        init_obs = np.array([self.pos, [0 for _ in range(90)], [4 for _ in range(90)]])
+        init_obs = np.array(self.pos + [0 for _ in range(90)] + [4 for _ in range(90)])
         observations = {a: copy(init_obs) for a in self.agents}
         gossip = random.sample(range(90), 90)
         for i, a in enumerate(observations.keys()):
-            observations[a][1][gossip[i]] = 1
+            observations[a][90 + gossip[i]] = 1
             self.agent_gossips[self.agent_name_mapping[a]].append(gossip[i])
 
         # Get dummy infos. Necessary for proper parallel_to_aec conversion
@@ -190,7 +190,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             gossips = [(1 if g in self.agent_gossips[aid] else 0) for g in range(90)]
             tbl = aid // 10
             tbl_actions = [(obs_actions[self.agent_name_mapping[n]] if self.pos[self.agent_name_mapping[n]] // 10 == tbl else 4) for n in self.agents]
-            observations[a] = np.array([self.pos, gossips, tbl_actions])
+            observations[a] = np.array(self.pos + gossips + tbl_actions)
 
         self.state = observations
 
@@ -212,8 +212,12 @@ class WeddingGossipEnvironment(ParallelEnv):
 
     def render(self):
         print("===== SEATING / MOVES =====")
-        for i in range(9):
-            table = [(self.seating[j], self.state["player_" + str(j)][2][j]) for j in range(i*10,(i+1)*10)]
+        for i in range(10):
+            table = []
+            for j in range(i*10,(i+1)*10):
+                player = self.seating[j]
+                move = self.state["player_" + str(player)][180 + player] if player else 4
+                table.append((player, move))
             print(f'Table {i}: {table}')
         print("===== GOSSIP INVENTORY =====")
         for i, g in enumerate(self.agent_gossips):

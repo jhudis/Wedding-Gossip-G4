@@ -20,7 +20,7 @@ MOVE = 4
 NONE = 4
 
 # Reward Params
-ALPHA = 1
+ALPHA = .2
 BETA = 1
 GAMMA = 2
 DELTA = 1
@@ -30,7 +30,7 @@ N_TURNS = 1000
 
 class WeddingGossipEnvironment(ParallelEnv):
     metadata = {"render_modes": ["human"], 
-                "name": "wedding_gossip_environment_v1"}
+                "name": "wedding_gossip_environment_v2"}
 
     def __init__(self, render_mode=None):
         self.possible_agents = ["player_" + str(r) for r in range(90)]
@@ -44,21 +44,27 @@ class WeddingGossipEnvironment(ParallelEnv):
         )
         self.render_mode = render_mode
         
+        """
+            obs = [self_pos, curr_goss, seating, nods, shakes]
+        """
         self.observation_spaces = dict(
             zip(
                 self.agents,
                 [
-                    MultiDiscrete(np.array([100 for _ in range(90)] + [2 for _ in range(90)] + [5 for _ in range(90)]))
+                    MultiDiscrete(np.array([100, 90] + [91 for _ in range(100)] + [3, 3]))
                 ]
                 * 90,
             )
         )
 
+        """
+            action = [action, switch_goss, move_pref]
+        """
         self.action_spaces = dict(
             zip(
                 self.agents,
                 [
-                    MultiDiscrete(np.array([5, 90, 10]))
+                    MultiDiscrete(np.array([5, 2, 10]))
                 ]
                 * 90,
             )
@@ -80,28 +86,25 @@ class WeddingGossipEnvironment(ParallelEnv):
         # each player_id is mapped to a number from 0-99. 
         # table_num = value % 10 (0-9)
         # seat_num = value / 10 (0-9)
-        self.pos = None
         self.pos = random.sample(range(100), k=90)
         # update the self.seating list - 100 size list based on pos
         self.seating = None
         self._init_seating()
 
-        # Not sure if we need this
-        # self.available_seats = self._get_available_seats()
-
         self.agent_gossips = [[] for _ in range(90)]
+        self.curr_gossips = [0 for _ in range(90)]
 
-        init_obs = np.array(self.pos + [0 for _ in range(90)] + [4 for _ in range(90)])
-        observations = {a: copy(init_obs) for a in self.agents}
+        self.obs_actions = [4 for _ in range(90)] 
+
+        observations = {}
         gossip = random.sample(range(90), 90)
-        for i, a in enumerate(observations.keys()):
-            observations[a][90 + gossip[i]] = 1
+        for i, a in enumerate(self.agents):
+            obs = np.array([self.pos[i], gossip[i]] + self.seating + [0, 0])
+            observations[a] = obs
             self.agent_gossips[self.agent_name_mapping[a]].append(gossip[i])
 
         # Get dummy infos. Necessary for proper parallel_to_aec conversion
         infos = {a: {} for a in self.agents}
-
-        self.state = observations
 
         return observations, infos
 
@@ -130,48 +133,55 @@ class WeddingGossipEnvironment(ParallelEnv):
         end: 1000000 / timestep (everyone has all gossip)
         """
 
-        obs_actions = [4 for _ in range(90)]
+        self.obs_actions = [4 for _ in range(90)]
         feedback = [[] for _ in range(90)]
         moves = []
+
+        # check switch gossip
+        for agent, action in actions.items():
+            aid = self.agent_name_mapping[agent]
+            if action[1] and len(self.agent_gossips[aid]) - 1 > self.curr_gossips[aid]:
+                self.curr_gossips[aid] += 1
         
         # process listens -> talk -> move in order
         for agent, action in sorted(actions.items(), key=(lambda x: x[1][0])):
             # get action 
-            act, goss, seat = action
+            act, _, seat = action
             aid = self.agent_name_mapping[agent]
 
             rewards[agent] = 0
-            obs_actions[aid] = act
+            self.obs_actions[aid] = act
 
             # listen
             if act < 2:
-                neighbors = self._get_left_neighbors(aid) if act == 0 else self._get_right_neighbors(aid)
+                neighbors = self._get_left_neighbors(self.pos[aid]) if act == 0 else self._get_right_neighbors(self.pos[aid])
 
                 possible_gossips = []
                 for n in neighbors:
-                    n_act, n_goss, _ = actions["player_" + str(n)]
+                    n_act = actions["player_" + str(n)][0]
+                    n_goss = self.agent_gossips[n][self.curr_gossips[n]]
                     complement = 2 if act == 1 else 3
-                    if (n_act == complement and n_goss in self.agent_gossips[n] and n_goss not in self.agent_gossips[aid]):
-                        possible_gossips.append((n_goss, n))
+                    if n_act == complement:
+                        if n_goss in self.agent_gossips[aid]:
+                            feedback[n].append(False)
+                        else:
+                            possible_gossips.append((n_goss, n))
                 heard_gossip = max(possible_gossips)[0] if possible_gossips else -1
-                if heard_gossip > 0:
-                    self.agent_gossips[aid].append(heard_gossip)
+                if heard_gossip >= 0:
+                    i = 0
+                    while i < len(self.agent_gossips[aid]) and self.agent_gossips[aid][i] > heard_gossip:
+                        i += 1
+                    self.agent_gossips[aid].insert(i, heard_gossip)
                 for g, i in possible_gossips:
                     feedback[i].append((g == heard_gossip))
-
                 rewards[agent] += (heard_gossip + 1) * ALPHA
             # talk 
             elif act < 4:
                 # check if gossip to share is present in the player's gossip list
-                if goss not in self.agent_gossips[aid]:
-                    # penalty can't be too big - will discourage talking
-                    rewards[agent] -= 10
-                else:
-                    # reward for choosing valid gossip
-                    rewards[agent] += 10
-                    # check for confirmation! If the said gossip was well-received, then give positive reward!
-                    for f in feedback[aid]:
-                        rewards[agent] += goss if f else -BETA
+                goss = self.agent_gossips[aid][self.curr_gossips[aid]]
+                # check for confirmation! If the said gossip was well-received, then give positive reward!
+                for f in feedback[aid]:
+                    rewards[agent] += goss if f else -BETA
             # move
             else:
                 move_choice_order = []
@@ -182,6 +192,8 @@ class WeddingGossipEnvironment(ParallelEnv):
                         move_choice_order.append(i)
                 moves.append((aid, move_choice_order))
 
+        self.available = self._get_available_seats()
+
         # resolve moves
         random.shuffle(moves)
         for aid, pref in moves:
@@ -190,12 +202,11 @@ class WeddingGossipEnvironment(ParallelEnv):
         observations = {}
         for a in self.agents:
             aid = self.agent_name_mapping[a]
-            gossips = [(1 if g in self.agent_gossips[aid] else 0) for g in range(90)]
-            tbl = aid // 10
-            tbl_actions = [(obs_actions[self.agent_name_mapping[n]] if self.pos[self.agent_name_mapping[n]] // 10 == tbl else 4) for n in self.agents]
-            observations[a] = np.array(self.pos + gossips + tbl_actions)
-
-        self.state = observations
+            goss = self.agent_gossips[aid][self.curr_gossips[aid]]
+            # gossips = [(1 if g in self.agent_gossips[aid] else 0) for g in range(90)]
+            # tbl = aid // 10
+            # tbl_actions = [(obs_actions[self.agent_name_mapping[n]] if self.pos[self.agent_name_mapping[n]] // 10 == tbl else 4) for n in self.agents]
+            observations[a] = np.array([self.pos[aid], goss] + self.seating + [feedback[aid].count(True), feedback[aid].count(False)])
 
         # Check termination conditions
         terminations = {agent: False for agent in self.agents}
@@ -221,7 +232,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             table = []
             for j in range(i*10,(i+1)*10):
                 player = self.seating[j]
-                move = self.state["player_" + str(player)][180 + player] if player else 4
+                move = self.obs_actions[player] if player < 90 else 4
                 table.append((player, move))
             print(f'Table {i}: {table}')
         print("===== GOSSIP INVENTORY =====")
@@ -244,17 +255,16 @@ class WeddingGossipEnvironment(ParallelEnv):
             array([action, gossip, seat1, seat2])
         """
         return self.action_spaces[agent]
-   
-    # Do we need this?
+
     def _get_available_seats(self):
         """
             A function that looks at self.pos, and returns a tuple of size 10 containing the available seats.
         """
-        return set(range(100)).difference(set(self.pos))
-    
+        return list(set(range(100)).difference(set(self.pos)))
+
     def _init_seating(self):
-        # a function to create and update the self.seating list - 100 size list. None represents empty seat!
-        self.seating = [None for _ in range(100)]
+        # a function to create and update the self.seating list - 100 size list. 90 represents empty seat!
+        self.seating = [90 for _ in range(100)]
         for pid, seat in enumerate(self.pos):
             self.seating[seat] = pid
 
@@ -265,7 +275,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         neighbor_ids = []
         for i in range(1, _count+1):
             curr_seat_id = (seat_id // 10 * 10) + ((seat_id - i) % 10)
-            if self.seating[curr_seat_id]:
+            if self.seating[curr_seat_id] < 90:
                 neighbor_ids.append(self.seating[curr_seat_id])
         return neighbor_ids
 
@@ -276,7 +286,7 @@ class WeddingGossipEnvironment(ParallelEnv):
         neighbor_ids = []
         for i in range(1, _count+1):
             curr_seat_id = (seat_id // 10 * 10) + ((seat_id + i) % 10)
-            if self.seating[curr_seat_id]:
+            if self.seating[curr_seat_id] < 90:
                 neighbor_ids.append(self.seating[curr_seat_id])
         return neighbor_ids
 
@@ -287,14 +297,15 @@ class WeddingGossipEnvironment(ParallelEnv):
             return False 
 
         for move in priority_list:
+            new_seat = self.available[move]
             # check if new position is occupied
-            if not self.seating[move]:
+            if self.seating[new_seat] < 90:
                 # move player from old position to new position
-                self.seating[curr_seat] = None
-                self.seating[move] = aid
+                self.seating[curr_seat] = 90 
+                self.seating[new_seat] = aid
 
                 # update player
-                self.pos[aid] = move
+                self.pos[aid] = new_seat 
 
                 return True
 

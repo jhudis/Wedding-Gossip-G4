@@ -9,7 +9,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 from pettingzoo.utils import parallel_to_aec
 
-from wedding_gossip_env import wedding_gossip_environment_v1
+from wedding_gossip_env import wedding_gossip_environment_v2
 
 def train_wedding(
     env_fn, steps: int = 10_000, seed: int | None = 0, **env_kwargs
@@ -80,6 +80,7 @@ def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwa
             else:
                 act = model.predict(obs, deterministic=True)[0]
 
+            print(agent, act)
             env.step(act)
     env.close()
 
@@ -90,14 +91,11 @@ def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwa
 
 
 if __name__ == "__main__":
-    env_fn = wedding_gossip_environment_v1
+    env_fn = wedding_gossip_environment_v2
     env_kwargs = {}
 
     # Train a model (takes ~3 minutes on GPU)
     train_wedding(env_fn, steps=196_608, seed=0, **env_kwargs)
-
-    # Evaluate 10 games (average reward should be positive but can vary significantly)
-    eval(env_fn, num_games=10, render_mode=None, **env_kwargs)
 
     # Watch 2 games
     eval(env_fn, num_games=2, render_mode="human", **env_kwargs)

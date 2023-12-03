@@ -30,12 +30,11 @@ N_TURNS = 1000
 
 class WeddingGossipEnvironment(ParallelEnv):
     metadata = {"render_modes": ["human"], 
-                "name": "wedding_gossip_environment_v0"}
+                "name": "wedding_gossip_environment_v1"}
 
     def __init__(self, render_mode=None):
         self.possible_agents = ["player_" + str(r) for r in range(90)]
         self.agents = copy(self.possible_agents)
-        self._agent_selector = agent_selector(self.agents)
 
         # optional: a mapping between agent name and player_ID
         self.agent_name_mapping = dict(
@@ -74,6 +73,8 @@ class WeddingGossipEnvironment(ParallelEnv):
         Returns the observations for each agent
         """
         self.timestep = 0
+
+        self.agents = copy(self.possible_agents)
 
         # a hash mapping player_ids to where they are situated on the board
         # each player_id is mapped to a number from 0-99. 
@@ -118,6 +119,8 @@ class WeddingGossipEnvironment(ParallelEnv):
         if not actions:
             self.agents = []
             return {}, {}, {}, {}, {}
+
+        self.timestep += 1
 
         rewards = {}
         """ reward function
@@ -198,20 +201,22 @@ class WeddingGossipEnvironment(ParallelEnv):
         terminations = {agent: False for agent in self.agents}
 
         # Check truncation conditions (overwrites termination conditions)
-        truncations = {a: (self.timestep > N_TURNS) for a in self.agents}
+        truncations = {a: (self.timestep >= N_TURNS) for a in self.agents}
 
         # Exit condition
         if any(terminations.values()) or all(truncations.values()):
+            infos = {a: {"terminal_observation": observations} for a in self.agents}
             self.agents = []
+        else:
+            infos = {a: {} for a in self.agents}
 
-        infos = {a: {} for a in self.agents}
-        
         self.render()
 
         return observations, rewards, terminations, truncations, infos
 
     def render(self):
         print("===== SEATING / MOVES =====")
+        print(f"Turn {self.timestep}")
         for i in range(10):
             table = []
             for j in range(i*10,(i+1)*10):

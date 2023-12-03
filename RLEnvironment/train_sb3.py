@@ -7,6 +7,7 @@ import time
 import supersuit as ss
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
+from pettingzoo.utils import parallel_to_aec
 
 from wedding_gossip_env import wedding_gossip_environment_v1
 
@@ -45,7 +46,8 @@ def train_wedding(
 
 def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwargs):
     # Evaluate a trained agent vs a random agent
-    env = env_fn.env(render_mode=render_mode, **env_kwargs)
+    env = env_fn.WeddingGossipEnvironment(render_mode=render_mode, **env_kwargs)
+    env = parallel_to_aec(env)
 
     print(
         f"\nStarting evaluation on {str(env.metadata['name'])} (num_games={num_games}, render_mode={render_mode})"

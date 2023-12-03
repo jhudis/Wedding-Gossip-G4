@@ -1,24 +1,26 @@
+from __future__ import annotations
+
 import os
 import random
 import functools
+import glob
+import time
+
 import numpy as np
 
 import gymnasium
 from gymnasium.spaces import Discrete
 
-from ray.rllib.algorithms.ppo import PPO
-from ray.rllib.algorithms.ppo import PPOConfig
-from RLEnvironment.wedding_gossip_env.env.wedding_gossip_environment import WeddingGossipEnvironment
-from ray.rllib.env.multi_agent_env import MultiAgentEnv, make_multi_agent # from - https://discuss.ray.io/t/bug-env-must-be-one-of-the-supported-types-baseenv-gym-env-multiagentenv-vectorenv-remotebaseenv/5704/2
-from ray.rllib.algorithms.algorithm import Algorithm
-from ray.rllib.env.wrappers.pettingzoo_env import PettingZooEnv
-from ray.tune.registry import register_env
-import ray
-from ray import tune
+import supersuit as ss
+from stable_baselines3 import PPO
+from stable_baselines3.ppo import MlpPolicy
+from pettingzoo.utils import parallel_to_aec
 
-CHECKPOINT_PATH="RLEnvironment/~/results/version0/PPO/PPO_version0_f2865_00000_0_2023-12-02_13-38-12/checkpoint_000000"
+from RLEnvironment.wedding_gossip_env import wedding_gossip_environment_v1
 
-__all__ = ["WeddingGossipEnvironment"]
+
+CHECKPOINT_PATH="RLEnvironment/"
+ENV_NAME="wedding_gossip_environment_v1"
 
 class Player():
     def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
@@ -83,9 +85,16 @@ class Player():
                 4: ('move')
         }       
 
+        try:
+            latest_policy = max(
+                glob.glob(f"{CHECKPOINT_PATH}{ENV_NAME}*.zip"), key=os.path.getctime
+            )
+        except ValueError:
+            print("Policy not found.")
+            exit(0)
+
         # load the trained model
-        # self.ppo_model = self.load_trained_model()
-        self.agent = PPO.from_checkpoint(CHECKPOINT_PATH)
+        self.model = PPO.load(latest_policy)
 
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
@@ -94,7 +103,7 @@ class Player():
             player_positions - 3-dimensional tuple: (player_id, table_num, seat_num)
         """
 
-        print(f'Before:- id - {self.id}, team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num}, gossip_list - {self.gossip_list} || player_positions - {player_positions}')
+        # print(f'Before:- id - {self.id}, team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num}, gossip_list - {self.gossip_list} || player_positions - {player_positions}')
 
         # update the observations['seating']
         for inst in player_positions:
@@ -115,7 +124,7 @@ class Player():
 
         # update the global timer
         self.time_stamp += 1
-        print(f'After:- id - {self.id}, team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num}, gossip_list - {self.gossip_list} || player_actions - {player_actions}')
+        # print(f'After:- id - {self.id}, team_num - {self.team_num}, table_num - {self.table_num}, seat_num - {self.seat_num}, gossip_list - {self.gossip_list} || player_actions - {player_actions}')
 
         # update the observations['action']
         # reset everthing to 4 i.e. none first
@@ -132,23 +141,23 @@ class Player():
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
 
-        observation = np.array([
-            self.observations['seating'],
-            self.observations['gossip'],
+        observation = np.array(
+            self.observations['seating'] +
+            self.observations['gossip'] +
             self.observations['actions']
-        ])
+        )
 
-        action, goss, pref = self.agent.compute_single_action(observation)
+        action, goss, pref = self.model.predict(observation)[0]
 
         if action < 2:
-            return self.num_action_map[action]
+            return self.num_action_map[action][0], self.num_action_map[action][1]
         elif action < 4:
             goss = goss if self.observations['gossip'][goss-1] else max(self.gossip_list)
-            return self.num_action_map[action], goss
+            return self.num_action_map[action][0], self.num_action_map[action][1], goss
         else:
             empty = self._get_empty()
             empty[0], empty[pref] = empty[pref], empty[0]
-            return self.num_action_map[action], pref
+            return self.num_action_map[action], empty
         
     def _get_empty(self):
         ret = []
@@ -168,45 +177,3 @@ class Player():
 
         # update the observation['gossip']
         self.observations['gossip'][gossip_item - 1] = True # had to subtract one, because the gossips go from 1-90
-
-    def env_creator(self, args):
-        env = WeddingGossipEnvironment()
-        return env
-
-    def load_trained_model(self):
-        # return Algorithm.from_checkpoint(CHECKPOINT_PATH)
-        # """
-        env_name = "version0"
-
-        register_env(env_name, lambda config: PettingZooEnv(self.env_creator(config)))
-        # # return PPO.from_checkpoint(CHECKPOINT_PATH)
-
-        config = (
-            PPOConfig()
-            .environment(env=env_name, clip_actions=True, disable_env_checking=True)
-            .rollouts(num_rollout_workers=4, rollout_fragment_length=128)
-            .training(
-                train_batch_size=512,
-                lr=2e-5,
-                gamma=0.99,
-                lambda_=0.9,
-                use_gae=True,
-                clip_param=0.4,
-                grad_clip=None,
-                entropy_coeff=0.1,
-                vf_loss_coeff=0.25,
-                sgd_minibatch_size=64,
-                num_sgd_iter=10,
-            )
-            .debugging(log_level="ERROR")
-            .framework(framework="torch")
-            .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
-        )
-
-        return PPO.from_checkpoint(CHECKPOINT_PATH)
-
-        # found this here - https://docs.ray.io/en/master/rllib/rllib-training.html#configuring-rllib-algorithms
-        # Got here from long github discussion here - https://github.com/ray-project/ray/issues/4569
-        # algo = PPO(config=config, env=WeddingGossipEnvironment)
-        # return algo.restore(CHECKPOINT_PATH)
-        # """

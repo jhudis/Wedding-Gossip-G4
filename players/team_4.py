@@ -62,10 +62,13 @@ class Player():
     
     def _get_gossip(self):
         '''Returns the gossip number we want to say.'''
-        # desired_gossip = 90
-        # desired_gossip = 90 - 89 / self.turns * self.turn_num
-        desired_gossip = 89 / math.log(self.turns + 1) * math.log(self.turns - self.turn_num + 1) + 1
-        return min(self.gossip_list, key=lambda gossip: abs(gossip - desired_gossip))
+        # desired_gossip = 90 - 89 / self.turns * self.turn_num  # linear decay  1700
+        # desired_gossip = 90 ** (1 - self.turn_num / self.turns)  # exponential decay  800
+        # desired_gossip = 91 - 90 ** (self.turn_num / self.turns)  # inverse exponential decay  1700
+        # return min(self.gossip_list, key=lambda gossip: abs(gossip - desired_gossip))
+        # return max(self.gossip_list)  # choose max  300
+        # return self.unique_gossip  # choose initial  2100
+        return random.choice(self.gossip_list)  # choose random  2300
     
     def _get_seats(self):
         '''Returns an ordered list of empty seats to move to in the form [[table1, seat1], [table2, seat2], ...].'''
@@ -164,17 +167,17 @@ class Player():
     
         if feedback and feedback[0].startswith('Shake Head'):
             if selfActionAtTable and selfActionAtTable[2] == "left":
-                print("Left Player Shook Head, should turn right")
+                # print("Left Player Shook Head, should turn right")
                 return 'right'
             else:
-                print("Right Player Shook Head, should turn left")
+                # print("Right Player Shook Head, should turn left")
                 return 'left'
-        print("feedback: ", feedback)
-        print("selfPosition: ", selfPosition)
-        print("OccupiedSeatsAtTable: ", OccupiedSeatsAtTable)
-        print("CurrentNeighbors2: ", CurrentNeighbors2)
-        print("CurrentActionaAtTable: ", selfActionAtTable)
-        print("Done")
+        # print("feedback: ", feedback)
+        # print("selfPosition: ", selfPosition)
+        # print("OccupiedSeatsAtTable: ", OccupiedSeatsAtTable)
+        # print("CurrentNeighbors2: ", CurrentNeighbors2)
+        # print("CurrentActionaAtTable: ", selfActionAtTable)
+        # print("Done")
 
 
         pass

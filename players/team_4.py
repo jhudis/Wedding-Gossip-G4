@@ -35,17 +35,17 @@ class Player():
         talk_or_listen_prob = random.random()
         highest_gossip_prob = max(self.gossip_list) / 90 
 
-        if self.turn_num < self.turns/2: 
-            if talk_or_listen_prob <= highest_gossip_prob:
-                return 'talk'
-            else:
-                return 'listen'
-        else:
+        # if self.turn_num < self.turns/2: 
+        #     if talk_or_listen_prob <= highest_gossip_prob:
+        #         return 'talk'
+        #     else:
+        #         return 'listen'
+        # else:
 
-            if talk_or_listen_prob <= 0.5: 
-                return 'talk'
-            else:
-                return 'listen'
+        if talk_or_listen_prob <= 0.5: 
+            return 'talk'
+        else:
+            return 'listen'
     
     def _get_direction(self, command):
         '''Returns 'left' or 'right' for the given command (which must be 'talk' or 'listen').'''
@@ -66,9 +66,10 @@ class Player():
         # desired_gossip = 90 ** (1 - self.turn_num / self.turns)  # exponential decay  800
         # desired_gossip = 91 - 90 ** (self.turn_num / self.turns)  # inverse exponential decay  1700
         # return min(self.gossip_list, key=lambda gossip: abs(gossip - desired_gossip))
+        # return random.choices(self.gossip_list, weights=[1 / (abs(gossip - desired_gossip) + 1) + 1 for gossip in self.gossip_list], k=1)[0]  2399 3527
         # return max(self.gossip_list)  # choose max  300
         # return self.unique_gossip  # choose initial  2100
-        return random.choice(self.gossip_list)  # choose random  2300
+        return random.choice(self.gossip_list)  # choose random  2374  4038
     
     def _get_seats(self):
         '''Returns an ordered list of empty seats to move to in the form [[table1, seat1], [table2, seat2], ...].'''

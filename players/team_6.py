@@ -11,6 +11,7 @@ class Player():
         self.unique_gossip = unique_gossip
         self.gossip_list = [Gossip(unique_gossip)]
         self.current_gossip = Gossip(unique_gossip)
+        self.old_gossip = []
         self.group_score = 0
         self.individual_score = 0
 
@@ -61,8 +62,7 @@ class Player():
         occupied_seats = set()
 
         # Collect the occupied seats
-        for player_position in self.latest_playerpositions:
-            table_num, seat_num = player_position[1], player_position[2]
+        for player, table_num, seat_num in self.latest_playerpositions:
             occupied_seats.add((table_num, seat_num))
 
         empty_seats = []
@@ -75,7 +75,6 @@ class Player():
 
         # so that it doesn't keep trying to go to the first few tables
         random.shuffle(empty_seats)
-
         return empty_seats
     
     def __move(self):
@@ -118,7 +117,7 @@ class Player():
         else:
             self.shake_pct = shakes/(nods + shakes)
         if self.shake_pct == 1 and len(self.gossip_list) > 1:
-            self.gossip_list.pop(0)
+            self.old_gossip.append(self.gossip_list.pop(0))
 
     def get_gossip(self, gossip_item, gossip_talker):
         gossip = self.__get_gossip(gossip_item)
@@ -139,8 +138,6 @@ class Player():
 
 # everytime we hear gossip we store talker, item and turn we received it
 # can also use this to keep track of feedback we receive for particular gossip
-
-
 class Gossip():
     def __init__(self, gossip_item: int):
         self.gossip_item = gossip_item
@@ -169,7 +166,7 @@ class OtherPlayer():
         self.id = id
         # what direction they talked and what turn
         self.talks = []
-        # what direction they moved and what turn
+        # what direction they listened and what turn
         self.listens = []
         # what is there position at every turn
         self.positions = {}

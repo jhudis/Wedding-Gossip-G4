@@ -35,10 +35,17 @@ class Player():
         talk_or_listen_prob = random.random()
         highest_gossip_prob = max(self.gossip_list) / 90 
 
-        if talk_or_listen_prob <= 0.5:
-            return 'talk'
+        if self.turn_num < self.turns/2: 
+            if talk_or_listen_prob <= highest_gossip_prob:
+                return 'talk'
+            else:
+                return 'listen'
         else:
-            return 'listen'
+
+            if talk_or_listen_prob <= 0.5: 
+                return 'talk'
+            else:
+                return 'listen'
     
     def _get_direction(self, command):
         '''Returns 'left' or 'right' for the given command (which must be 'talk' or 'listen').'''

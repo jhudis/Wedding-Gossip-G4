@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./Wedding-Gossip-Environment/wedding-gossip-environment/env"
+    ]
+}

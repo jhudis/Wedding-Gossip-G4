@@ -16,6 +16,7 @@ from players.team_3 import Player as Player3
 from players.team_4 import Player as Player4
 from players.team_5 import Player as Player5
 from players.team_6 import Player as Player6
+from players.team_7 import Player as Player7
 
 from player_state import PlayerState
 
@@ -144,7 +145,7 @@ class WeddingGossip():
         gossips = list(range(1, 91))
         random.shuffle(gossips)
 
-        colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080']
+        colors = ['#808080' ,'#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ffff', '#0000ff', '#8000ff', '#ff00ff', '#800040', '#804000', '#808000', '#408000', '#008080', '#800080']
 
         attendees = list(range(0, 90))
         random.shuffle(attendees)
@@ -178,6 +179,9 @@ class WeddingGossip():
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             elif team_num == 6:
                 self.shuffled_players.append(Player6(id, team_num, table_num, seat_num, gossip, color, self.T))
+                self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
+            elif team_num == 7:
+                self.shuffled_players.append(Player7(id, team_num, table_num, seat_num, gossip, color, self.T))
                 self.shuffled_player_states.append(PlayerState(id, team_num, table_num, seat_num, gossip, color))
             else:
                 self.shuffled_players.append(DefaultPlayer(id, team_num, table_num, seat_num, gossip, color, self.T))
@@ -250,7 +254,7 @@ class WeddingGossip():
                 self.canvas.itemconfigure(self.turn_eyes_comp[table][seat], fill=color, outline=color)
                 self.canvas.itemconfigure(self.left_eyes_comp[table][seat], fill="#000000", outline="#000000")
                 self.canvas.itemconfigure(self.right_eyes_comp[table][seat], fill="#000000", outline="#000000")
-                self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#FD1005", width=5, style="chord")
+                self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#ffffff", width=5, style="chord")
                     
             for index, player_state in enumerate(self.shuffled_player_states):
                 team_num = player_state.team_num
@@ -368,7 +372,7 @@ class WeddingGossip():
             seat = player_state.seat_num
             color = player_state.color
             id = player_state.id
-            self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#FD1005", width=5, style="chord")
+            self.canvas.itemconfigure(self.table_comps[table][seat], start=self.left_listen_angle[seat][0], extent=self.left_listen_angle[seat][1], fill=color, outline="#000000", width=5, style="chord")
             self.canvas.itemconfigure(self.turn_eyes_comp[table][seat], outline=color, fill=color)
             self.canvas.itemconfigure(self.left_eyes_comp[table][seat], outline="#000000", fill="#000000")
             self.canvas.itemconfigure(self.right_eyes_comp[table][seat], outline="#000000", fill="#000000")
@@ -392,13 +396,13 @@ class WeddingGossip():
         self.turn_comp = self.canvas.create_text(30 * self.scale, 3.5 * self.scale, anchor="nw", font=('Helvetica', int(1.8 * self.scale), 'bold'), text="Turn: " + str(self.turn) + "/" + str(self.T))
         self.group_score_comp = self.canvas.create_text(100 * self.scale, 3.5 * self.scale, anchor="nw", font=('Helvetica', int(1.8 * self.scale), 'bold'), text="Group Score: " + str(round(self.group_score / 90, 2)))
 
-        pause_btn = Button(self.canvas, width=int(0.4 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.pause, font=('freemono', int(1.3 * self.scale), 'bold'), text="PAUSE", bg="#E3AB62")
+        pause_btn = Button(self.canvas, width=int(0.8 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.pause, font=('freemono', int(1.3 * self.scale), 'bold'), text="PAUSE", bg="#E3AB62")
         pause_btn.place(x=60 * self.scale, y=1 * self.scale)
 
-        resume_btn = Button(self.canvas, width=int(0.4 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.resume, font=('freemono', int(1.3 * self.scale), 'bold'), text="START/\nRESUME", bg="#E3AB62")
+        resume_btn = Button(self.canvas, width=int(0.8 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.resume, font=('freemono', int(1.3 * self.scale), 'bold'), text="START/\nRESUME", bg="#E3AB62")
         resume_btn.place(x=70 * self.scale, y=1 * self.scale)
 
-        step_btn = Button(self.canvas, width=int(0.4 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.step, font=('freemono', int(1.3 * self.scale), 'bold'), text="STEP", bg="#E3AB62")
+        step_btn = Button(self.canvas, width=int(0.8 * self.scale), height=int(0.2 * self.scale), bd='10', command=self.step, font=('freemono', int(1.3 * self.scale), 'bold'), text="STEP", bg="#E3AB62")
         step_btn.place(x=80 * self.scale, y=1 * self.scale)
 
         self.canvas.pack()
@@ -488,7 +492,6 @@ class WeddingGossip():
                 f.write("\n\n\nAverage Team Scores\n")
 
             for team in sorted(scores.keys()):
-                print(team)
                 total = 0
                 total_score = 0
                 for score in scores[team]:
@@ -541,6 +544,7 @@ class WeddingGossip():
                     # check if gossip to share is present in the player's gossip list
                     if gossip not in self.player_states[index].gossip_list:
                         action_list.append(["invalid action"])
+                        self.player_states[index].curr_state = ""
                     else:
                         action_list.append(action)
                         self.player_states[index].action = action

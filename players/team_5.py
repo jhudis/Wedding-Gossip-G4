@@ -34,6 +34,7 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
+        self.turns_num = turns
 
         self.gossip_i = 0
         self.seats = [90] * 100
@@ -110,9 +111,8 @@ class Player():
         self.table_num = self.observations['seating'][self.id] // 10
         self.seat_num  = self.observations['seating'][self.id] % 10
 
-
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
-    # did (i.e., talked/listened in what direction, or moved)
+    # did (i.e., talked/listened and in what direction)
     def observe_after_turn(self, player_actions):
         """
             player_actions - 2-dimensional list: [player_id, [player_action[0], player_action[1]]]. Where player_action[0] can be 'talk' or 'listen', and player_action[1] can be 'left' or 'right'

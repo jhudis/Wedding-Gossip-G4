@@ -78,7 +78,7 @@ def eval(env_fn, num_games: int = 100, render_mode: str | None = None, **env_kwa
             if termination or truncation:
                 break
             else:
-                act = model.predict(obs, deterministic=True)[0]
+                act = model.predict(obs, deterministic=False)[0]
 
             print(agent, act)
             env.step(act)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     env_kwargs = {}
 
     # Train a model (takes ~3 minutes on GPU)
-    train_wedding(env_fn, steps=196_608, seed=0, **env_kwargs)
+    # train_wedding(env_fn, steps=196_608, seed=0, **env_kwargs)
 
     # Watch 2 games
     eval(env_fn, num_games=2, render_mode="human", **env_kwargs)

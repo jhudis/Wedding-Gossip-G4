@@ -51,7 +51,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             zip(
                 self.agents,
                 [
-                    MultiDiscrete(np.array([100, 90] + [91 for _ in range(100)] + [3, 3]))
+                    MultiDiscrete(np.array([100, 90] + [91 for _ in range(100)] + [4, 4]))
                 ]
                 * 90,
             )
@@ -206,6 +206,7 @@ class WeddingGossipEnvironment(ParallelEnv):
             # gossips = [(1 if g in self.agent_gossips[aid] else 0) for g in range(90)]
             # tbl = aid // 10
             # tbl_actions = [(obs_actions[self.agent_name_mapping[n]] if self.pos[self.agent_name_mapping[n]] // 10 == tbl else 4) for n in self.agents]
+            print(feedback[aid])
             observations[a] = np.array([self.pos[aid], goss] + self.seating + [feedback[aid].count(True), feedback[aid].count(False)])
 
         # Check termination conditions

@@ -229,9 +229,9 @@ class Player():
         #to allow for range of 27 cuz acerage of top has a max of about 88
         #once we get a round number 
         #increment = 27/numrounds 
-        increment = float(float(4.5)/self.total_rounds)
+        increment = float(float(7.25)/self.total_rounds)
         #increment = .15 
-        print("the value of the increment is " + str(increment))
+        #print("the value of the increment is " + str(increment))
         thresh = thresh_value + increment*round_num
         #print("this is the value:" + str(heuristic))
         #print("this is the thresh value:" + str(thresh))'''
@@ -240,7 +240,7 @@ class Player():
             #take top 1/3 of scores stored 
             sorted_gossip = self.gossip_list
             sorted_gossip.sort(reverse=True)
-            top_vals = math.floor(len(sorted_gossip)/5)
+            top_vals = math.floor(len(sorted_gossip)/5)  #maybe as game goes on we adjust this?
             random_index = random.randint(0, top_vals)
             gossip_return = sorted_gossip[random_index]
             #print("the gossip value player number " + str(self.id) + " is sharing is:" + str(gossip_return))

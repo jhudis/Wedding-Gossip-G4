@@ -42,10 +42,10 @@ class Player():
                 return 'listen'
         else:
 
-        if talk_or_listen_prob <= 0.5: 
-            return 'talk'
-        else:
-            return 'listen'
+            if talk_or_listen_prob <= 0.5: 
+                return 'talk'
+            else:
+                return 'listen'
     
     def _get_direction(self, command):
         '''Returns 'left' or 'right' for the given command (which must be 'talk' or 'listen').'''

@@ -31,7 +31,7 @@ class Player():
     def _get_command(self):
         '''Returns 'talk', 'listen', or 'move'.'''
         # TODO: Change default behavior seen below to specifications in Brainstorming doc (Stephen)
-        if random.random() < 0.12:
+        if random.random() < 0.10:
             return 'move'
         
         talk_or_listen_prob = random.random()
@@ -43,7 +43,6 @@ class Player():
             else:
                 return 'listen'
         else:
-
             if talk_or_listen_prob <= 0.5: 
                 return 'talk'
             else:

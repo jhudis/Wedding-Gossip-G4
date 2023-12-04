@@ -41,8 +41,7 @@ def train_wedding(
             batch_size=256,
         )
         
-    for i in range(learn_steps):
-        model.learn(total_timesteps=steps)
+    model.learn(total_timesteps=steps)
 
     model.save(f"{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")
 

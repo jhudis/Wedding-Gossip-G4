@@ -16,8 +16,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 from pettingzoo.utils import parallel_to_aec
 
-from RLEnvironment.wedding_gossip_env import wedding_gossip_environment_v2
-
+from RLEnvironment.wedding_gossip_env import wedding_gossip_environment_v1
 
 CHECKPOINT_PATH="RLEnvironment/"
 ENV_NAME="wedding_gossip_environment_v2"
@@ -135,13 +134,14 @@ class Player():
         # return 'listen', 'left', 
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
+        curr_goss = self.gossip_list[self.gossip_i]-1
         observation = np.array(
-                [self.seat_id, self.gossip_list[self.gossip_i]-1] +
+                [self.seat_id, curr_goss] +
                 self.seats + 
                 self.feedbacks
         )
-        print(observation)
         action, switch, pref = self.model.predict(observation)[0]
+        print(f"Player {self.id}: current gossip {curr_goss}, action space {action, switch, pref}")
 
         if switch and self.gossip_i < len(self.gossip_list) - 1:
             self.gossip_i += 1
@@ -176,3 +176,4 @@ class Player():
         # print('Get gossip:', gossip_item, gossip_talker)
         self.gossip_list.append(gossip_item)
         self.gossip_list.sort(reverse=True)
+        self.gossip_i = 0

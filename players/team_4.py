@@ -37,7 +37,7 @@ class Player():
         talk_or_listen_prob = random.random()
         highest_gossip_prob = max(self.gossip_list) / 90 
 
-        if self.turn_num < self.turns/2: 
+        if self.turn_num < 5: 
             if talk_or_listen_prob <= highest_gossip_prob:
                 return 'talk'
             else:

@@ -11,7 +11,7 @@ class Player():
         self.unique_gossip = unique_gossip
         self.gossip_list = [Gossip(unique_gossip)]
         self.current_gossip = Gossip(unique_gossip)
-        self.old_gossip = []
+        self.archive_gossip_list = [Gossip(unique_gossip)]
         self.group_score = 0
         self.individual_score = 0
 
@@ -60,22 +60,29 @@ class Player():
         '''
 
         occupied_seats = set()
-
+        table_interactions = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
         # Collect the occupied seats
         for player, table_num, seat_num in self.latest_playerpositions:
             occupied_seats.add((table_num, seat_num))
-
-        empty_seats = []
-
+            if player in self.other_players:
+                table_interactions[table_num] += table_interactions[table_num]+ self.other_players[player].interactions
+        empty_seats = {}
+        sorted_tables = {k: v for k, v in sorted(table_interactions.items(), key=lambda item: item[1])}
         # iterate through tables and seats to find empty seats
         for table_num in range(0, 10):
             for seat_num in range(0, 10):
                 if (table_num, seat_num) not in occupied_seats:
-                    empty_seats.append([table_num, seat_num])
+                    empty_seats[list(sorted_tables.keys()).index(table_num)] = [table_num, seat_num]
+
+        sorted_seats = {k: v for k, v in sorted(empty_seats.items(), key=lambda item: item[0])}
+        final_seats = []
+
+        for key in sorted_seats:
+            final_seats.append(sorted_seats[key])
 
         # so that it doesn't keep trying to go to the first few tables
-        random.shuffle(empty_seats)
-        return empty_seats
+        #random.shuffle(sorted_seats.values())
+        return final_seats
     
     def __move(self):
         self.shake_pct = 0
@@ -95,7 +102,7 @@ class Player():
     
     def __get_new_gossip(self):
         for gossip in self.gossip_list:
-            if len(gossip.shakes) < 30:
+            if len(gossip.shakes) < 10:
                 return gossip
         return gossip[0]
 
@@ -108,25 +115,35 @@ class Player():
             if response[0] == 'N':
                 nods += 1
                 self.current_gossip.add_nod(int(response[9:]), self.turn)
+                self.other_players[int(response[9:])].interactions += 1
             # shake
             else:
                 shakes += 1
                 self.current_gossip.add_shake(int(response[11:]), self.turn)
+                self.other_players[int(response[11:])].interactions += 1
         if nods == 0 and shakes == 0:
             self.shake_pct = 0
         else:
             self.shake_pct = shakes/(nods + shakes)
         if self.shake_pct == 1 and len(self.gossip_list) > 1:
-            self.old_gossip.append(self.gossip_list.pop(0))
+            self.archive_gossip_list.append(self.gossip_list.pop(0))
+#        if self.shake_pct == 1:
+#            if len(self.gossip_list) == 1:
+#                self.gossip_list = self.archive_gossip_list
+#            else:
+#                self.gossip_list.pop(0)
 
     def get_gossip(self, gossip_item, gossip_talker):
         gossip = self.__get_gossip(gossip_item)
+        self.other_players[gossip_talker].interactions += 1
         # log new gossip!
         if gossip == None:
             gossip = Gossip(gossip_item)
             gossip.add_heard(gossip_talker, self.turn)
             self.gossip_list.append(gossip)
+            self.archive_gossip_list.append(gossip)
             self.gossip_list.sort(key=lambda x: x.get_item(), reverse=True)
+            self.archive_gossip_list.sort(key=lambda x: x.get_item(), reverse=True)
         # alter existing gossip
         else:
             gossip.add_heard(gossip_talker, self.turn)
@@ -170,6 +187,8 @@ class OtherPlayer():
         self.listens = []
         # what is there position at every turn
         self.positions = {}
+        # total number of interactions
+        self.interactions = 0
 
     def get_id(self): return self.id
 
@@ -181,5 +200,3 @@ class OtherPlayer():
     
     def add_position(self, table, seat, turn):
         self.positions[turn] = (table, seat)
-
-        

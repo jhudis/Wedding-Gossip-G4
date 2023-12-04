@@ -492,7 +492,6 @@ class WeddingGossip():
                 f.write("\n\n\nAverage Team Scores\n")
 
             for team in sorted(scores.keys()):
-                print(team)
                 total = 0
                 total_score = 0
                 for score in scores[team]:
@@ -545,6 +544,7 @@ class WeddingGossip():
                     # check if gossip to share is present in the player's gossip list
                     if gossip not in self.player_states[index].gossip_list:
                         action_list.append(["invalid action"])
+                        self.player_states[index].curr_state = ""
                     else:
                         action_list.append(action)
                         self.player_states[index].action = action

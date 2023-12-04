@@ -11,14 +11,26 @@ class Player():
         self.gossip_list = [unique_gossip]
         self.group_score = 0
         self.individual_score = 0
+        self.turns_num = turns
 
+        self.curr_turn = 0
+        self.hottest_goss = unique_gossip
+        self.empty_seats = []
 
     # At the beginning of a turn, players should be told who is sitting where, so that they can use that info to decide if/where to move
     def observe_before_turn(self, player_positions):
-        pass
+        self._get_empty_seats(player_positions)
+
+    def _get_empty_seats(self, player_positions):
+        self.empty_seats.clear()
+        occupied = {(t, s) for _, t, s in player_positions}
+        for t in range(10):
+            for s in range(10):
+                if (t, s) not in occupied:
+                    self.empty_seats.append([t, s])
 
     # At the end of a turn, players should be told what everybody at their current table (who was there at the start of the turn)
-    # did (i.e., talked/listened in what direction, or moved)
+    # did (i.e., talked/listened and in what direction)
     def observe_after_turn(self, player_actions):
         pass
 
@@ -29,44 +41,24 @@ class Player():
         # return 'listen', 'right', 
         # return 'move', priority_list: [[table number, seat number] ...]
 
-        action_type = random.randint(0, 2)
+        choice = random.random()
+        self.curr_turn += 1
 
         # talk
-        if action_type == 0:
-            direction = random.randint(0, 1)
-            gossip = random.choice(self.gossip_list)
-            # left
-            if direction == 0:
-                return 'talk', 'left', gossip
-            # right
-            else:
-                return 'talk', 'right', gossip
-        
+        if choice < self.hottest_goss / 90 * .9:
+            direction = 'right' if self.curr_turn % 2 else 'left'
+            return 'talk', direction, self.hottest_goss
         # listen
-        elif action_type == 1:
-            direction = random.randint(0, 1)
-            # left
-            if direction == 0:
-                return 'listen', 'left'
-            # right
-            else:
-                return 'listen', 'right'
-
+        elif choice < .9:
+            direction = 'left' if self.curr_turn % 2 else 'right'
+            return 'listen', direction
         # move
         else:
-            table1 = random.randint(0, 9)
-            seat1 = random.randint(0, 9)
-
-            table2 = random.randint(0, 9)
-            while table2 == table1:
-                table2 = random.randint(0, 9)
-
-            seat2 = random.randint(0, 9)
-
-            return 'move', [[table1, seat1], [table2, seat2]]
+            random.shuffle(self.empty_seats)
+            return 'move', self.empty_seats
     
     def feedback(self, feedback):
         pass
 
     def get_gossip(self, gossip_item, gossip_talker):
-        pass
+        self.hottest_goss = max(self.hottest_goss, gossip_item)

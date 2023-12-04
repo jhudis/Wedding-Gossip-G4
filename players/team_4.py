@@ -1,6 +1,8 @@
 import random
 import math
 
+STRATEGY_CHANGE_TURN_NUM = 5
+
 class Player():
     def __init__(self, id, team_num, table_num, seat_num, unique_gossip, color, turns):
         self.id = id
@@ -37,7 +39,7 @@ class Player():
         talk_or_listen_prob = random.random()
         highest_gossip_prob = max(self.gossip_list) / 90 
 
-        if self.turn_num < 5: 
+        if self.turn_num < STRATEGY_CHANGE_TURN_NUM: 
             if talk_or_listen_prob <= highest_gossip_prob:
                 return 'talk'
             else:
@@ -71,7 +73,8 @@ class Player():
         # return random.choices(self.gossip_list, weights=[max(self.num_shakes_by_gossip) - self.num_shakes_by_gossip[gossip] + 0.01 for gossip in self.gossip_list], k=1)[0]  # reduce prob for shaken gossip
         # return max(self.gossip_list)  # choose max  300
         # return self.unique_gossip  # choose initial  2100
-        return random.choice(self.gossip_list)  # choose random  2374  4038
+        # return random.choice(self.gossip_list)  # choose random  2374  4038
+        return max(self.gossip_list) if self.turn_num < STRATEGY_CHANGE_TURN_NUM else random.choice(self.gossip_list)  # choose max then random  
     
     def _get_seats(self):
         '''Returns an ordered list of empty seats to move to in the form [[table1, seat1], [table2, seat2], ...].'''

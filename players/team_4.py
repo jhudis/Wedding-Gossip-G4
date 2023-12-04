@@ -16,6 +16,8 @@ class Player():
         self.player_positions = []
         self.player_actions = []
         self.turns = turns
+        self.num_shakes_by_gossip = [0] * 91
+        self.last_gossip_told = 0
 
 
     def observe_before_turn(self, player_positions):
@@ -65,8 +67,9 @@ class Player():
         # desired_gossip = 90 - 89 / self.turns * self.turn_num  # linear decay  1700
         # desired_gossip = 90 ** (1 - self.turn_num / self.turns)  # exponential decay  800
         # desired_gossip = 91 - 90 ** (self.turn_num / self.turns)  # inverse exponential decay  1700
-        # return min(self.gossip_list, key=lambda gossip: abs(gossip - desired_gossip))
-        # return random.choices(self.gossip_list, weights=[1 / (abs(gossip - desired_gossip) + 1) + 1 for gossip in self.gossip_list], k=1)[0]  2399 3527
+        # return min(self.gossip_list, key=lambda gossip: abs(gossip - desired_gossip))  # closest to decay trend
+        # return random.choices(self.gossip_list, weights=[1 / (abs(gossip - desired_gossip) + 1) + 1 for gossip in self.gossip_list], k=1)[0]  # random near decay trend  2399 3527
+        # return random.choices(self.gossip_list, weights=[max(self.num_shakes_by_gossip) - self.num_shakes_by_gossip[gossip] + 0.01 for gossip in self.gossip_list], k=1)[0]  # reduce prob for shaken gossip
         # return max(self.gossip_list)  # choose max  300
         # return self.unique_gossip  # choose initial  2100
         return random.choice(self.gossip_list)  # choose random  2374  4038
@@ -136,7 +139,9 @@ class Player():
         self.turn_num += 1
         command = self._get_command()
         if command == 'talk':
-            return command, self._get_direction(command), self._get_gossip()
+            gossip = self._get_gossip()
+            self.last_gossip_told = gossip
+            return command, self._get_direction(command), gossip
         elif command == 'listen':
             return command, self._get_direction(command)
         elif command == 'move':
@@ -180,11 +185,9 @@ class Player():
         # print("CurrentActionaAtTable: ", selfActionAtTable)
         # print("Done")
 
-
-        pass
-
-
-   
+        for message in feedback:
+            if message[0] == 'S':
+                self.num_shakes_by_gossip[self.last_gossip_told] += 1
 
     def get_gossip(self, gossip_item, gossip_talker):
         '''Respond to gossip told to us.'''
